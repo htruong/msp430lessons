@@ -1,0 +1,1931 @@
+
+main.elf:     file format elf32-msp430
+
+
+Disassembly of section .text:
+
+0000c200 <__init_stack>:
+    c200:	31 40 00 20 	mov	#8192,	r1	;#0x2000
+
+0000c204 <__low_level_init>:
+    c204:	15 42 5c 01 	mov	&0x015c,r5	
+    c208:	75 f3       	and.b	#-1,	r5	;r3 As==11
+    c20a:	35 d0 08 5a 	bis	#23048,	r5	;#0x5a08
+
+0000c20e <__do_copy_data>:
+    c20e:	3f 40 00 00 	mov	#0,	r15	;#0x0000
+    c212:	0f 93       	tst	r15		
+    c214:	07 24       	jz	$+16     	;abs 0xc224
+    c216:	82 45 5c 01 	mov	r5,	&0x015c	
+    c21a:	2f 83       	decd	r15		
+    c21c:	9f 4f ce c2 	mov	-15666(r15),7168(r15);0xc2ce(r15), 0x1c00(r15)
+    c220:	00 1c 
+    c222:	f9 23       	jnz	$-12     	;abs 0xc216
+
+0000c224 <__do_clear_bss>:
+    c224:	3f 40 01 00 	mov	#1,	r15	;#0x0001
+    c228:	0f 93       	tst	r15		
+    c22a:	06 24       	jz	$+14     	;abs 0xc238
+    c22c:	82 45 5c 01 	mov	r5,	&0x015c	
+    c230:	1f 83       	dec	r15		
+    c232:	cf 43 00 1c 	mov.b	#0,	7168(r15);r3 As==00, 0x1c00(r15)
+    c236:	fa 23       	jnz	$-10     	;abs 0xc22c
+
+0000c238 <main>:
+unsigned char RXData;
+
+int main(void) {
+
+
+    WDTCTL = WDTPW + WDTHOLD;
+    c238:	b2 40 80 5a 	mov	#23168,	&0x015c	;#0x5a80
+    c23c:	5c 01 
+
+
+    PJDIR |= BIT0 + BIT1 + BIT2 + BIT3;
+    c23e:	b2 d0 0f 00 	bis	#15,	&0x0324	;#0x000f
+    c242:	24 03 
+    PJOUT &= ~(BIT0 + BIT1 + BIT2 + BIT3);
+    c244:	b2 f0 f0 ff 	and	#-16,	&0x0322	;#0xfff0
+    c248:	22 03 
+    PJOUT |= BIT0;
+    c24a:	92 d3 22 03 	bis	#1,	&0x0322	;r3 As==01
+    
+    // Init SMCLK = MCLk = ACLK = 1MHz
+    CSCTL0_H = 0xA5;
+    c24e:	f2 40 a5 ff 	mov.b	#-91,	&0x0161	;#0xffa5
+    c252:	61 01 
+    CSCTL1 |= DCOFSEL0 + DCOFSEL1;          // Set max. DCO setting = 8MHz
+    c254:	b2 d0 06 00 	bis	#6,	&0x0162	;#0x0006
+    c258:	62 01 
+    CSCTL2 = SELA_3 + SELS_3 + SELM_3;      // set ACLK = MCLK = DCO
+    c25a:	b2 40 33 03 	mov	#819,	&0x0164	;#0x0333
+    c25e:	64 01 
+    CSCTL3 = DIVA_3 + DIVS_3 + DIVM_3;      // set all dividers to 1MHz
+    c260:	b2 40 33 03 	mov	#819,	&0x0166	;#0x0333
+    c264:	66 01 
+
+    // Configure Pins for I2C
+    P1SEL1 |= BIT6 + BIT7;                  // Pin init
+    c266:	f2 d0 c0 ff 	bis.b	#-64,	&0x020c	;#0xffc0
+    c26a:	0c 02 
+    // eUSCI configuration
+    UCB0CTLW0 |= UCSWRST ;	            //Software reset enabled
+    c26c:	92 d3 40 06 	bis	#1,	&0x0640	;r3 As==01
+    UCB0CTLW0 |= UCMODE_3  + UCSYNC;	    //I2C mode, sync mode
+    c270:	b2 d0 00 07 	bis	#1792,	&0x0640	;#0x0700
+    c274:	40 06 
+    UCB0I2COA0 = 0x48 + UCOAEN;   	    //own address is 0x48 + enable
+    c276:	b2 40 48 04 	mov	#1096,	&0x0654	;#0x0448
+    c27a:	54 06 
+    UCB0CTLW0 &=~UCSWRST;	            //clear reset register
+    c27c:	b2 f0 fe ff 	and	#-2,	&0x0640	;#0xfffe
+    c280:	40 06 
+    UCB0IE |=  UCRXIE0; 	            //receive interrupt enable
+    c282:	92 d3 6a 06 	bis	#1,	&0x066a	;r3 As==01
+
+    __bis_SR_register(CPUOFF + GIE);        // Enter LPM0 w/ interrupts
+    c286:	32 d0 18 00 	bis	#24,	r2	;#0x0018
+    __no_operation();
+    c28a:	03 43       	nop			
+
+    PJOUT &= ~(BIT0 + BIT1 + BIT2 + BIT3);
+    c28c:	b2 f0 f0 ff 	and	#-16,	&0x0322	;#0xfff0
+    c290:	22 03 
+    PJOUT |= BIT2;
+    c292:	a2 d2 22 03 	bis	#4,	&0x0322	;r2 As==10
+    return 0;
+}
+    c296:	0f 43       	clr	r15		
+
+0000c298 <__stop_progExec__>:
+    c298:	32 d0 f0 00 	bis	#240,	r2	;#0x00f0
+    c29c:	fd 3f       	jmp	$-4      	;abs 0xc298
+
+0000c29e <__ctors_end>:
+    c29e:	30 40 cc c2 	br	#0xc2cc	
+
+0000c2a2 <i2c_isr>:
+
+interrupt(USCI_B0_VECTOR) i2c_isr(void) {
+    c2a2:	0f 12       	push	r15		
+    c2a4:	0e 12       	push	r14		
+    PJOUT &= ~(BIT0 + BIT1 + BIT2 + BIT3);
+    c2a6:	b2 f0 f0 ff 	and	#-16,	&0x0322	;#0xfff0
+    c2aa:	22 03 
+    PJOUT |= BIT1;
+    c2ac:	a2 d3 22 03 	bis	#2,	&0x0322	;r3 As==10
+    switch(UCB0IV) {
+    c2b0:	b2 90 16 00 	cmp	#22,	&0x066e	;#0x0016
+    c2b4:	6e 06 
+    c2b6:	07 20       	jnz	$+16     	;abs 0xc2c6
+      case 0x0e: break;                     // Vector 16: RXIFG2 break;
+      case 0x10: break;                     // Vector 18: TXIFG2 break;
+      case 0x12: break;                     // Vector 20: RXIFG1 break;
+      case 0x14: break;                     // Vector 22: TXIFG1 break;
+      case 0x16:
+        RXData = UCB0RXBUF;                 // Get RX data
+    c2b8:	1e 42 4c 06 	mov	&0x064c,r14	
+    c2bc:	c2 4e 00 1c 	mov.b	r14,	&0x1c00	
+        PJOUT = RXData;
+    c2c0:	4f 4e       	mov.b	r14,	r15	
+    c2c2:	82 4f 22 03 	mov	r15,	&0x0322	
+      case 0x1a: break;                     // Vector 28: BCNTIFG break;
+      case 0x1c: break;                     // Vector 30: clock low timeout break;
+      case 0x1e: break;                     // Vector 32: 9th bit break;
+      default: break;	
+    }
+}
+    c2c6:	3e 41       	pop	r14		
+    c2c8:	3f 41       	pop	r15		
+    c2ca:	00 13       	reti			
+
+0000c2cc <_unexpected_>:
+    c2cc:	00 13       	reti			
+
+Disassembly of section .bss:
+
+00001c00 <RXData>:
+	...
+
+Disassembly of section .vectors:
+
+0000ff80 <__ivtbl_64>:
+    ff80:	9e c2 9e c2 	bic	&0xc29e,-15714(r14);0xc29e(r14)
+    ff84:	9e c2 
+    ff86:	9e c2 9e c2 	bic	&0xc29e,-15714(r14);0xc29e(r14)
+    ff8a:	9e c2 
+    ff8c:	9e c2 9e c2 	bic	&0xc29e,-15714(r14);0xc29e(r14)
+    ff90:	9e c2 
+    ff92:	9e c2 9e c2 	bic	&0xc29e,-15714(r14);0xc29e(r14)
+    ff96:	9e c2 
+    ff98:	9e c2 9e c2 	bic	&0xc29e,-15714(r14);0xc29e(r14)
+    ff9c:	9e c2 
+    ff9e:	9e c2 9e c2 	bic	&0xc29e,-15714(r14);0xc29e(r14)
+    ffa2:	9e c2 
+    ffa4:	9e c2 9e c2 	bic	&0xc29e,-15714(r14);0xc29e(r14)
+    ffa8:	9e c2 
+    ffaa:	9e c2 9e c2 	bic	&0xc29e,-15714(r14);0xc29e(r14)
+    ffae:	9e c2 
+    ffb0:	9e c2 9e c2 	bic	&0xc29e,-15714(r14);0xc29e(r14)
+    ffb4:	9e c2 
+    ffb6:	9e c2 9e c2 	bic	&0xc29e,-15714(r14);0xc29e(r14)
+    ffba:	9e c2 
+    ffbc:	9e c2 9e c2 	bic	&0xc29e,-15714(r14);0xc29e(r14)
+    ffc0:	9e c2 
+    ffc2:	9e c2 9e c2 	bic	&0xc29e,-15714(r14);0xc29e(r14)
+    ffc6:	9e c2 
+    ffc8:	9e c2 9e c2 	bic	&0xc29e,-15714(r14);0xc29e(r14)
+    ffcc:	9e c2 
+    ffce:	9e c2 9e c2 	bic	&0xc29e,-15714(r14);0xc29e(r14)
+    ffd2:	9e c2 
+    ffd4:	9e c2 9e c2 	bic	&0xc29e,-15714(r14);0xc29e(r14)
+    ffd8:	9e c2 
+    ffda:	9e c2 9e c2 	bic	&0xc29e,-15714(r14);0xc29e(r14)
+    ffde:	9e c2 
+    ffe0:	9e c2 9e c2 	bic	&0xc29e,-15714(r14);0xc29e(r14)
+    ffe4:	9e c2 
+    ffe6:	9e c2 9e c2 	bic	&0xc29e,-15714(r14);0xc29e(r14)
+    ffea:	9e c2 
+    ffec:	9e c2 a2 c2 	bic	&0xc2a2,-15714(r14);0xc29e(r14)
+    fff0:	9e c2 
+    fff2:	9e c2 9e c2 	bic	&0xc29e,-15714(r14);0xc29e(r14)
+    fff6:	9e c2 
+    fff8:	9e c2 9e c2 	bic	&0xc29e,-15714(r14);0xc29e(r14)
+    fffc:	9e c2 
+    fffe:	00 c2       	bic	r2,	r0	
+
+Disassembly of section .debug_aranges:
+
+00000000 <.debug_aranges>:
+   0:	14 00       	mova	#0x00000,r4	
+   2:	00 00       	bra	@r0		
+   4:	02 00       	mova	@r0,	r2	
+   6:	00 00       	bra	@r0		
+   8:	00 00       	bra	@r0		
+   a:	02 00       	mova	@r0,	r2	
+   c:	a2 c2 2a 00 	bic	#4,	&0x002a	;r2 As==10
+  10:	38 c2       	bic	#8,	r8	;r2 As==11
+  12:	60 00 00 00 	mova	r0,	&0x00000
+  16:	00 00       	bra	@r0		
+  18:	10 00       	bra	#0x00000	
+  1a:	00 00       	bra	@r0		
+  1c:	02 00       	mova	@r0,	r2	
+  1e:	83 02       	.word	0x0283;	????	Illegal as address instr
+  20:	00 00       	bra	@r0		
+  22:	02 00       	mova	@r0,	r2	
+  24:	00 c2       	bic	r2,	r0	
+  26:	04 00       	mova	@r0,	r4	
+  28:	00 00       	bra	@r0		
+  2a:	00 00       	bra	@r0		
+  2c:	10 00       	bra	#0x00000	
+  2e:	00 00       	bra	@r0		
+  30:	02 00       	mova	@r0,	r2	
+  32:	48 03       	rrum.a	#1,	r8	
+  34:	00 00       	bra	@r0		
+  36:	02 00       	mova	@r0,	r2	
+  38:	04 c2       	bic	r2,	r4	
+  3a:	0a 00       	mova	@r0,	r10	
+  3c:	00 00       	bra	@r0		
+  3e:	00 00       	bra	@r0		
+  40:	10 00       	bra	#0x00000	
+  42:	00 00       	bra	@r0		
+  44:	02 00       	mova	@r0,	r2	
+  46:	0d 04       	mova	@r4,	r13	
+  48:	00 00       	bra	@r0		
+  4a:	02 00       	mova	@r0,	r2	
+  4c:	0e c2       	bic	r2,	r14	
+  4e:	16 00       	mova	#0x00000,r6	
+  50:	00 00       	bra	@r0		
+  52:	00 00       	bra	@r0		
+  54:	10 00       	bra	#0x00000	
+  56:	00 00       	bra	@r0		
+  58:	02 00       	mova	@r0,	r2	
+  5a:	d2 04       	cmpa	r4,	r2	
+  5c:	00 00       	bra	@r0		
+  5e:	02 00       	mova	@r0,	r2	
+  60:	24 c2       	bic	#4,	r4	;r2 As==10
+  62:	14 00       	mova	#0x00000,r4	
+  64:	00 00       	bra	@r0		
+  66:	00 00       	bra	@r0		
+  68:	10 00       	bra	#0x00000	
+  6a:	00 00       	bra	@r0		
+  6c:	02 00       	mova	@r0,	r2	
+  6e:	97 05 00 00 	cmpa	#0x50000,r7	
+  72:	02 00       	mova	@r0,	r2	
+  74:	98 c2 06 00 	bic	&0x0006,0(r8)	;0x0000(r8)
+  78:	00 00 
+  7a:	00 00       	bra	@r0		
+  7c:	10 00       	bra	#0x00000	
+  7e:	00 00       	bra	@r0		
+  80:	02 00       	mova	@r0,	r2	
+  82:	5c 06       	rlam	#2,	r12	
+  84:	00 00       	bra	@r0		
+  86:	02 00       	mova	@r0,	r2	
+  88:	cc c2 02 00 	bic.b	r2,	2(r12)	;0x0002(r12)
+  8c:	00 00       	bra	@r0		
+	...
+
+Disassembly of section .debug_pubnames:
+
+00000000 <.debug_pubnames>:
+   0:	2e 00 00 00 	mova	&0x00000,r14	
+   4:	02 00       	mova	@r0,	r2	
+   6:	00 00       	bra	@r0		
+   8:	00 00       	bra	@r0		
+   a:	83 02       	.word	0x0283;	????	Illegal as address instr
+   c:	00 00       	bra	@r0		
+   e:	5d 00       	rrcm	#1,	r13	
+  10:	00 00       	bra	@r0		
+  12:	6d 61       	addc.b	@r1,	r13	
+  14:	69 6e       	addc.b	@r14,	r9	
+  16:	00 71       	subc	r1,	r0	
+  18:	00 00       	bra	@r0		
+  1a:	00 69       	addc	r9,	r0	
+  1c:	32 63       	addc	#-1,	r2	;r3 As==11
+  1e:	5f 69 73 72 	addc.b	29299(r9),r15	;0x7273(r9)
+  22:	00 72       	subc	r2,	r0	
+  24:	02 00       	mova	@r0,	r2	
+  26:	00 52       	add	r2,	r0	
+  28:	58 44 61 74 	mov.b	29793(r4),r8	;0x7461(r4)
+  2c:	61 00 00 00 	mova	r0,	&0x10000
+	...
+
+Disassembly of section .debug_info:
+
+00000000 <.debug_info>:
+   0:	7f 02 00 00 	mova	r2,	0(r15)	;0x0000(r15)
+   4:	02 00       	mova	@r0,	r2	
+   6:	00 00       	bra	@r0		
+   8:	00 00       	bra	@r0		
+   a:	02 01       	mova	@r1,	r2	
+   c:	00 00       	bra	@r0		
+   e:	00 00       	bra	@r0		
+  10:	01 c1       	bic	r1,	r1	
+  12:	00 00       	bra	@r0		
+  14:	00 15       	pushm	#1,	r0	
+	...
+  22:	00 00       	bra	@r0		
+  24:	00 02       	bra	#4		;r2 As==10
+  26:	01 06       	mova	@r6,	r1	
+  28:	39 00 00 00 	mova	0x0000,	r9	;PC rel. 0x0002a
+  2c:	03 02       	.word	0x0203;	????	Illegal as address instr
+  2e:	05 69       	addc	r9,	r5	
+  30:	6e 74       	subc.b	@r4,	r14	
+  32:	00 02       	bra	#4		;r2 As==10
+  34:	04 05       	mova	@r5,	r4	
+  36:	ac 00 00 00 	adda	#0x00000,r12	
+  3a:	02 08       	mova	@r8,	r2	
+  3c:	05 a7       	dadd	r7,	r5	
+  3e:	00 00       	bra	@r0		
+  40:	00 02       	bra	#4		;r2 As==10
+  42:	01 08       	mova	@r8,	r1	
+  44:	37 00 00 00 	mova	0x0000,	r7	;PC rel. 0x00046
+  48:	02 02       	mova	#4,	r2	;r2 As==10
+  4a:	07 71       	subc	r1,	r7	
+  4c:	00 00       	bra	@r0		
+  4e:	00 02       	bra	#4		;r2 As==10
+  50:	04 07       	mova	@r7,	r4	
+  52:	6c 00 00 00 	mova	r0,	&0xc0000
+  56:	02 08       	mova	@r8,	r2	
+  58:	07 67       	rlc	r7		
+  5a:	00 00       	bra	@r0		
+  5c:	00 04       	bra	@r4		
+  5e:	01 45       	mov	r5,	r1	
+  60:	00 00       	bra	@r0		
+  62:	00 01       	bra	@r1		
+  64:	07 01       	mova	@r1,	r7	
+  66:	2c 00 00 00 	mova	&0x00000,r12	
+  6a:	38 c2       	bic	#8,	r8	;r2 As==11
+  6c:	98 c2 02 71 	bic	&0x7102,1282(r8);0x0502(r8)
+  70:	02 05 
+  72:	01 7e       	subc	r14,	r1	
+  74:	00 00       	bra	@r0		
+  76:	00 01       	bra	@r1		
+  78:	28 01 a2 c2 	mova	&0x1c2a2,r8	
+  7c:	cc c2 00 00 	bic.b	r2,	0(r12)	;0x0000(r12)
+  80:	00 00       	bra	@r0		
+  82:	06 b8       	bit	r8,	r6	
+  84:	00 00       	bra	@r0		
+  86:	00 02       	bra	#4		;r2 As==10
+  88:	8f 01 b5 00 	mova	#0x100b5,r15	
+  8c:	00 00       	bra	@r0		
+  8e:	94 00 00 00 	cmpa	#0x00000,r4	
+  92:	01 01       	mova	@r1,	r1	
+  94:	07 41       	mov	r1,	r7	
+  96:	00 00       	bra	@r0		
+  98:	00 06       	bra	@r6		
+  9a:	cb 00       	mova	r0,	r11	
+  9c:	00 00       	bra	@r0		
+  9e:	02 94       	cmp	r4,	r2	
+  a0:	01 c8       	bic	r8,	r1	
+  a2:	00 00       	bra	@r0		
+  a4:	00 ab       	dadd	r11,	r0	
+  a6:	00 00       	bra	@r0		
+  a8:	00 01       	bra	@r1		
+  aa:	01 07       	mova	@r7,	r1	
+  ac:	48 00       	rrcm.a	#1,	r8	
+  ae:	00 00       	bra	@r0		
+  b0:	06 d5       	bis	r5,	r6	
+  b2:	00 00       	bra	@r0		
+  b4:	00 02       	bra	#4		;r2 As==10
+  b6:	98 01 d2 00 	cmpa	#0x100d2,r8	
+  ba:	00 00       	bra	@r0		
+  bc:	ab 00 00 00 	adda	#0x00000,r11	
+  c0:	01 01       	mova	@r1,	r1	
+  c2:	06 df       	bis	r15,	r6	
+  c4:	00 00       	bra	@r0		
+  c6:	00 02       	bra	#4		;r2 As==10
+  c8:	9c 01 dc 00 	cmpa	#0x100dc,r12	
+  cc:	00 00       	bra	@r0		
+  ce:	ab 00 00 00 	adda	#0x00000,r11	
+  d2:	01 01       	mova	@r1,	r1	
+  d4:	06 54       	add	r4,	r6	
+  d6:	00 00       	bra	@r0		
+  d8:	00 02       	bra	#4		;r2 As==10
+  da:	8f 07 51 00 	mova	#0x70051,r15	
+  de:	00 00       	bra	@r0		
+  e0:	94 00 00 00 	cmpa	#0x00000,r4	
+  e4:	01 01       	mova	@r1,	r1	
+  e6:	06 0f       	mova	@r15,	r6	
+  e8:	00 00       	bra	@r0		
+  ea:	00 02       	bra	#4		;r2 As==10
+  ec:	68 08 0c 00 	mova	r8,	&0x8000c
+  f0:	00 00       	bra	@r0		
+  f2:	ab 00 00 00 	adda	#0x00000,r11	
+  f6:	01 01       	mova	@r1,	r1	
+  f8:	06 04       	mova	@r4,	r6	
+  fa:	01 00       	mova	@r0,	r1	
+  fc:	00 02       	bra	#4		;r2 As==10
+  fe:	6c 08 01 01 	mova	r8,	&0xc0101
+ 102:	00 00       	bra	@r0		
+ 104:	ab 00 00 00 	adda	#0x00000,r11	
+ 108:	01 01       	mova	@r1,	r1	
+ 10a:	06 f7       	and	r7,	r6	
+ 10c:	00 00       	bra	@r0		
+ 10e:	00 02       	bra	#4		;r2 As==10
+ 110:	c1 0c       	mova	r12,	r1	
+ 112:	f4 00       	suba	r0,	r4	
+ 114:	00 00       	bra	@r0		
+ 116:	ab 00 00 00 	adda	#0x00000,r11	
+ 11a:	01 01       	mova	@r1,	r1	
+ 11c:	06 9d       	cmp	r13,	r6	
+ 11e:	00 00       	bra	@r0		
+ 120:	00 02       	bra	#4		;r2 As==10
+ 122:	db 0c       	cmpa	r12,	r11	
+ 124:	9a 00 00 00 	cmpa	#0x00000,r10	
+ 128:	2e 01 00 00 	mova	&0x10000,r14	
+ 12c:	01 01       	mova	@r1,	r1	
+ 12e:	08 ab       	dadd	r11,	r8	
+ 130:	00 00       	bra	@r0		
+ 132:	00 06       	bra	@r6		
+ 134:	e9 00       	adda	r0,	r9	
+ 136:	00 00       	bra	@r0		
+ 138:	02 e3       	xor	#0,	r2	;r3 As==00
+ 13a:	0c e6       	xor	r6,	r12	
+ 13c:	00 00       	bra	@r0		
+ 13e:	00 ab       	dadd	r11,	r0	
+ 140:	00 00       	bra	@r0		
+ 142:	00 01       	bra	@r1		
+ 144:	01 06       	mova	@r6,	r1	
+ 146:	60 00 00 00 	mova	r0,	&0x00000
+ 14a:	02 ff       	and	r15,	r2	
+ 14c:	0c 5d       	add	r13,	r12	
+ 14e:	00 00       	bra	@r0		
+ 150:	00 ab       	dadd	r11,	r0	
+ 152:	00 00       	bra	@r0		
+ 154:	00 01       	bra	@r1		
+ 156:	01 06       	mova	@r6,	r1	
+ 158:	93 00       	.word	0x0093;	????	Illegal as address instr
+ 15a:	00 00       	bra	@r0		
+ 15c:	02 05       	mova	@r5,	r2	
+ 15e:	0d 90       	cmp	r0,	r13	
+ 160:	00 00       	bra	@r0		
+ 162:	00 ab       	dadd	r11,	r0	
+ 164:	00 00       	bra	@r0		
+ 166:	00 01       	bra	@r1		
+ 168:	01 06       	mova	@r6,	r1	
+ 16a:	89 00 00 00 	mova	#0x00000,r9	
+ 16e:	02 3f       	jmp	$-506    	;abs 0xff74
+ 170:	0f 86       	sub	r6,	r15	
+ 172:	00 00       	bra	@r0		
+ 174:	00 ab       	dadd	r11,	r0	
+ 176:	00 00       	bra	@r0		
+ 178:	00 01       	bra	@r1		
+ 17a:	01 09       	mova	@r9,	r1	
+ 17c:	4a 00       	rrcm.a	#1,	r10	
+ 17e:	00 00       	bra	@r0		
+ 180:	01 05       	mova	@r5,	r1	
+ 182:	41 00       	rrcm.a	#1,	r1	
+ 184:	00 00       	bra	@r0		
+ 186:	01 01       	mova	@r1,	r1	
+ 188:	06 b8       	bit	r8,	r6	
+ 18a:	00 00       	bra	@r0		
+ 18c:	00 02       	bra	#4		;r2 As==10
+ 18e:	8f 01 b5 00 	mova	#0x100b5,r15	
+ 192:	00 00       	bra	@r0		
+ 194:	94 00 00 00 	cmpa	#0x00000,r4	
+ 198:	01 01       	mova	@r1,	r1	
+ 19a:	06 cb       	bic	r11,	r6	
+ 19c:	00 00       	bra	@r0		
+ 19e:	00 02       	bra	#4		;r2 As==10
+ 1a0:	94 01 c8 00 	cmpa	#0x100c8,r4	
+ 1a4:	00 00       	bra	@r0		
+ 1a6:	ab 00 00 00 	adda	#0x00000,r11	
+ 1aa:	01 01       	mova	@r1,	r1	
+ 1ac:	06 d5       	bis	r5,	r6	
+ 1ae:	00 00       	bra	@r0		
+ 1b0:	00 02       	bra	#4		;r2 As==10
+ 1b2:	98 01 d2 00 	cmpa	#0x100d2,r8	
+ 1b6:	00 00       	bra	@r0		
+ 1b8:	ab 00 00 00 	adda	#0x00000,r11	
+ 1bc:	01 01       	mova	@r1,	r1	
+ 1be:	06 df       	bis	r15,	r6	
+ 1c0:	00 00       	bra	@r0		
+ 1c2:	00 02       	bra	#4		;r2 As==10
+ 1c4:	9c 01 dc 00 	cmpa	#0x100dc,r12	
+ 1c8:	00 00       	bra	@r0		
+ 1ca:	ab 00 00 00 	adda	#0x00000,r11	
+ 1ce:	01 01       	mova	@r1,	r1	
+ 1d0:	06 54       	add	r4,	r6	
+ 1d2:	00 00       	bra	@r0		
+ 1d4:	00 02       	bra	#4		;r2 As==10
+ 1d6:	8f 07 51 00 	mova	#0x70051,r15	
+ 1da:	00 00       	bra	@r0		
+ 1dc:	94 00 00 00 	cmpa	#0x00000,r4	
+ 1e0:	01 01       	mova	@r1,	r1	
+ 1e2:	06 0f       	mova	@r15,	r6	
+ 1e4:	00 00       	bra	@r0		
+ 1e6:	00 02       	bra	#4		;r2 As==10
+ 1e8:	68 08 0c 00 	mova	r8,	&0x8000c
+ 1ec:	00 00       	bra	@r0		
+ 1ee:	ab 00 00 00 	adda	#0x00000,r11	
+ 1f2:	01 01       	mova	@r1,	r1	
+ 1f4:	06 04       	mova	@r4,	r6	
+ 1f6:	01 00       	mova	@r0,	r1	
+ 1f8:	00 02       	bra	#4		;r2 As==10
+ 1fa:	6c 08 01 01 	mova	r8,	&0xc0101
+ 1fe:	00 00       	bra	@r0		
+ 200:	ab 00 00 00 	adda	#0x00000,r11	
+ 204:	01 01       	mova	@r1,	r1	
+ 206:	06 f7       	and	r7,	r6	
+ 208:	00 00       	bra	@r0		
+ 20a:	00 02       	bra	#4		;r2 As==10
+ 20c:	c1 0c       	mova	r12,	r1	
+ 20e:	f4 00       	suba	r0,	r4	
+ 210:	00 00       	bra	@r0		
+ 212:	ab 00 00 00 	adda	#0x00000,r11	
+ 216:	01 01       	mova	@r1,	r1	
+ 218:	06 9d       	cmp	r13,	r6	
+ 21a:	00 00       	bra	@r0		
+ 21c:	00 02       	bra	#4		;r2 As==10
+ 21e:	db 0c       	cmpa	r12,	r11	
+ 220:	9a 00 00 00 	cmpa	#0x00000,r10	
+ 224:	2e 01 00 00 	mova	&0x10000,r14	
+ 228:	01 01       	mova	@r1,	r1	
+ 22a:	06 e9       	xor	r9,	r6	
+ 22c:	00 00       	bra	@r0		
+ 22e:	00 02       	bra	#4		;r2 As==10
+ 230:	e3 0c       	.word	0x0ce3;	????	Illegal as address instr
+ 232:	e6 00       	adda	r0,	r6	
+ 234:	00 00       	bra	@r0		
+ 236:	ab 00 00 00 	adda	#0x00000,r11	
+ 23a:	01 01       	mova	@r1,	r1	
+ 23c:	06 60       	addc	r0,	r6	
+ 23e:	00 00       	bra	@r0		
+ 240:	00 02       	bra	#4		;r2 As==10
+ 242:	ff 0c       	suba	r12,	r15	
+ 244:	5d 00       	rrcm	#1,	r13	
+ 246:	00 00       	bra	@r0		
+ 248:	ab 00 00 00 	adda	#0x00000,r11	
+ 24c:	01 01       	mova	@r1,	r1	
+ 24e:	06 93       	tst	r6		
+ 250:	00 00       	bra	@r0		
+ 252:	00 02       	bra	#4		;r2 As==10
+ 254:	05 0d       	mova	@r13,	r5	
+ 256:	90 00 00 00 	cmpa	#0x00000,r0	
+ 25a:	ab 00 00 00 	adda	#0x00000,r11	
+ 25e:	01 01       	mova	@r1,	r1	
+ 260:	06 89       	sub	r9,	r6	
+ 262:	00 00       	bra	@r0		
+ 264:	00 02       	bra	#4		;r2 As==10
+ 266:	3f 0f 86 00 	mova	134(r15),r15	;0x0086(r15)
+ 26a:	00 00       	bra	@r0		
+ 26c:	ab 00 00 00 	adda	#0x00000,r11	
+ 270:	01 01       	mova	@r1,	r1	
+ 272:	0a 4a       	mov	r10,	r10	
+ 274:	00 00       	bra	@r0		
+ 276:	00 01       	bra	@r1		
+ 278:	05 41       	mov	r1,	r5	
+ 27a:	00 00       	bra	@r0		
+ 27c:	00 01       	bra	@r1		
+ 27e:	03 03       	.word	0x0303;	????	Illegal as address instr
+ 280:	00 1c 00 c1 	bicx	r1,	r0	
+ 284:	00 00       	bra	@r0		
+ 286:	00 02       	bra	#4		;r2 As==10
+ 288:	00 9c       	cmp	r12,	r0	
+ 28a:	00 00       	bra	@r0		
+ 28c:	00 02       	bra	#4		;r2 As==10
+ 28e:	01 a1       	dadd	r1,	r1	
+ 290:	00 00       	bra	@r0		
+ 292:	00 00       	bra	@r0		
+ 294:	c2 04       	mova	r4,	r2	
+ 296:	c2 2f       	jc	$-122    	;abs 0x21c
+ 298:	62 75       	subc.b	@r5,	r2	
+ 29a:	69 6c       	addc.b	@r12,	r9	
+ 29c:	64 2f       	jc	$-310    	;abs 0x166
+ 29e:	62 75       	subc.b	@r5,	r2	
+ 2a0:	69 6c       	addc.b	@r12,	r9	
+ 2a2:	64 64       	addc.b	@r4,	r4	
+ 2a4:	2f 67       	addc	@r7,	r15	
+ 2a6:	63 63       	.word	0x6363;	????	Illegal as 2-op instr
+ 2a8:	2d 6d       	addc	@r13,	r13	
+ 2aa:	73 70       	.word	0x7073;	????	Illegal as 2-op instr
+ 2ac:	34 33       	jn	$-406    	;abs 0x116
+ 2ae:	30 2d       	jc	$+610    	;abs 0x510
+ 2b0:	34 2e       	jc	$-918    	;abs 0xff1a
+ 2b2:	35 2e       	jc	$-916    	;abs 0xff1e
+ 2b4:	33 7e       	.word	0x7e33;	????	Illegal as 2-op instr
+ 2b6:	6d 73       	subc.b	#2,	r13	;r3 As==10
+ 2b8:	70 67       	addc.b	@r7+,	r0	
+ 2ba:	63 63       	.word	0x6363;	????	Illegal as 2-op instr
+ 2bc:	2d 34       	jge	$+92     	;abs 0x318
+ 2be:	2e 35       	jge	$+606    	;abs 0x51c
+ 2c0:	2e 32       	jn	$-930    	;abs 0xff1e
+ 2c2:	2d 32       	jn	$-932    	;abs 0xff1e
+ 2c4:	30 31       	jn	$+610    	;abs 0x526
+ 2c6:	31 30       	jn	$+100    	;abs 0x32a
+ 2c8:	36 31       	jn	$+622    	;abs 0x536
+ 2ca:	32 2f       	jc	$-410    	;abs 0x130
+ 2cc:	2e 2f       	jc	$-418    	;abs 0x12a
+ 2ce:	67 63       	addc.b	#2,	r7	;r3 As==10
+ 2d0:	63 2d       	jc	$+712    	;abs 0x598
+ 2d2:	34 2e       	jc	$-918    	;abs 0xff3c
+ 2d4:	35 2e       	jc	$-916    	;abs 0xff40
+ 2d6:	33 2f       	jc	$-408    	;abs 0x13e
+ 2d8:	67 63       	addc.b	#2,	r7	;r3 As==10
+ 2da:	63 2f       	jc	$-312    	;abs 0x1a2
+ 2dc:	63 6f       	.word	0x6f63;	????	Illegal as 2-op instr
+ 2de:	6e 66       	addc.b	@r6,	r14	
+ 2e0:	69 67       	addc.b	@r7,	r9	
+ 2e2:	2f 6d       	addc	@r13,	r15	
+ 2e4:	73 70       	.word	0x7073;	????	Illegal as 2-op instr
+ 2e6:	34 33       	jn	$-406    	;abs 0x150
+ 2e8:	30 2f       	jc	$-414    	;abs 0x14a
+ 2ea:	63 72       	.word	0x7263;	????	Illegal as 2-op instr
+ 2ec:	74 30       	jn	$+234    	;abs 0x3d6
+ 2ee:	2e 53       	incd	r14		
+ 2f0:	00 2f       	jc	$-510    	;abs 0xf2
+ 2f2:	62 75       	subc.b	@r5,	r2	
+ 2f4:	69 6c       	addc.b	@r12,	r9	
+ 2f6:	64 2f       	jc	$-310    	;abs 0x1c0
+ 2f8:	62 75       	subc.b	@r5,	r2	
+ 2fa:	69 6c       	addc.b	@r12,	r9	
+ 2fc:	64 64       	addc.b	@r4,	r4	
+ 2fe:	2f 67       	addc	@r7,	r15	
+ 300:	63 63       	.word	0x6363;	????	Illegal as 2-op instr
+ 302:	2d 6d       	addc	@r13,	r13	
+ 304:	73 70       	.word	0x7073;	????	Illegal as 2-op instr
+ 306:	34 33       	jn	$-406    	;abs 0x170
+ 308:	30 2d       	jc	$+610    	;abs 0x56a
+ 30a:	34 2e       	jc	$-918    	;abs 0xff74
+ 30c:	35 2e       	jc	$-916    	;abs 0xff78
+ 30e:	33 7e       	.word	0x7e33;	????	Illegal as 2-op instr
+ 310:	6d 73       	subc.b	#2,	r13	;r3 As==10
+ 312:	70 67       	addc.b	@r7+,	r0	
+ 314:	63 63       	.word	0x6363;	????	Illegal as 2-op instr
+ 316:	2d 34       	jge	$+92     	;abs 0x372
+ 318:	2e 35       	jge	$+606    	;abs 0x576
+ 31a:	2e 32       	jn	$-930    	;abs 0xff78
+ 31c:	2d 32       	jn	$-932    	;abs 0xff78
+ 31e:	30 31       	jn	$+610    	;abs 0x580
+ 320:	31 30       	jn	$+100    	;abs 0x384
+ 322:	36 31       	jn	$+622    	;abs 0x590
+ 324:	32 2f       	jc	$-410    	;abs 0x18a
+ 326:	62 75       	subc.b	@r5,	r2	
+ 328:	69 6c       	addc.b	@r12,	r9	
+ 32a:	64 2d       	jc	$+714    	;abs 0x5f4
+ 32c:	72 65       	addc.b	@r5+,	r2	
+ 32e:	73 75       	.word	0x7573;	????	Illegal as 2-op instr
+ 330:	6c 74       	subc.b	@r4,	r12	
+ 332:	2f 67       	addc	@r7,	r15	
+ 334:	63 63       	.word	0x6363;	????	Illegal as 2-op instr
+ 336:	00 47       	br	r7		
+ 338:	4e 55       	add.b	r5,	r14	
+ 33a:	20 41       	br	@r1		
+ 33c:	53 20       	jnz	$+168    	;abs 0x3e4
+ 33e:	32 2e       	jc	$-922    	;abs 0xffa4
+ 340:	32 31       	jn	$+614    	;abs 0x5a6
+ 342:	2e 35       	jge	$+606    	;abs 0x5a0
+ 344:	32 00 01 80 	mova	0x8001,	r2	;PC rel. 0xf8347
+ 348:	c1 00       	mova	r0,	r1	
+ 34a:	00 00       	bra	@r0		
+ 34c:	02 00       	mova	@r0,	r2	
+ 34e:	b0 00 00 00 	suba	#0x00000,r0	
+ 352:	02 01       	mova	@r1,	r2	
+ 354:	29 01 00 00 	mova	&0x10000,r9	
+ 358:	04 c2       	bic	r2,	r4	
+ 35a:	0e c2       	bic	r2,	r14	
+ 35c:	2f 62       	addc	#4,	r15	;r2 As==10
+ 35e:	75 69       	addc.b	@r9+,	r5	
+ 360:	6c 64       	addc.b	@r4,	r12	
+ 362:	2f 62       	addc	#4,	r15	;r2 As==10
+ 364:	75 69       	addc.b	@r9+,	r5	
+ 366:	6c 64       	addc.b	@r4,	r12	
+ 368:	64 2f       	jc	$-310    	;abs 0x232
+ 36a:	67 63       	addc.b	#2,	r7	;r3 As==10
+ 36c:	63 2d       	jc	$+712    	;abs 0x634
+ 36e:	6d 73       	subc.b	#2,	r13	;r3 As==10
+ 370:	70 34       	jge	$+226    	;abs 0x452
+ 372:	33 30       	jn	$+104    	;abs 0x3da
+ 374:	2d 34       	jge	$+92     	;abs 0x3d0
+ 376:	2e 35       	jge	$+606    	;abs 0x5d4
+ 378:	2e 33       	jn	$-418    	;abs 0x1d6
+ 37a:	7e 6d       	addc.b	@r13+,	r14	
+ 37c:	73 70       	.word	0x7073;	????	Illegal as 2-op instr
+ 37e:	67 63       	addc.b	#2,	r7	;r3 As==10
+ 380:	63 2d       	jc	$+712    	;abs 0x648
+ 382:	34 2e       	jc	$-918    	;abs 0xffec
+ 384:	35 2e       	jc	$-916    	;abs 0xfff0
+ 386:	32 2d       	jc	$+614    	;abs 0x5ec
+ 388:	32 30       	jn	$+102    	;abs 0x3ee
+ 38a:	31 31       	jn	$+612    	;abs 0x5ee
+ 38c:	30 36       	jge	$-926    	;abs 0xffee
+ 38e:	31 32       	jn	$-924    	;abs 0xfff2
+ 390:	2f 2e       	jc	$-928    	;abs 0xfff0
+ 392:	2f 67       	addc	@r7,	r15	
+ 394:	63 63       	.word	0x6363;	????	Illegal as 2-op instr
+ 396:	2d 34       	jge	$+92     	;abs 0x3f2
+ 398:	2e 35       	jge	$+606    	;abs 0x5f6
+ 39a:	2e 33       	jn	$-418    	;abs 0x1f8
+ 39c:	2f 67       	addc	@r7,	r15	
+ 39e:	63 63       	.word	0x6363;	????	Illegal as 2-op instr
+ 3a0:	2f 63       	addc	#2,	r15	;r3 As==10
+ 3a2:	6f 6e       	addc.b	@r14,	r15	
+ 3a4:	66 69       	addc.b	@r9,	r6	
+ 3a6:	67 2f       	jc	$-304    	;abs 0x276
+ 3a8:	6d 73       	subc.b	#2,	r13	;r3 As==10
+ 3aa:	70 34       	jge	$+226    	;abs 0x48c
+ 3ac:	33 30       	jn	$+104    	;abs 0x414
+ 3ae:	2f 63       	addc	#2,	r15	;r3 As==10
+ 3b0:	72 74       	subc.b	@r4+,	r2	
+ 3b2:	30 2e       	jc	$-926    	;abs 0x14
+ 3b4:	53 00       	rrcm	#1,	#0	;r3 As==00
+ 3b6:	2f 62       	addc	#4,	r15	;r2 As==10
+ 3b8:	75 69       	addc.b	@r9+,	r5	
+ 3ba:	6c 64       	addc.b	@r4,	r12	
+ 3bc:	2f 62       	addc	#4,	r15	;r2 As==10
+ 3be:	75 69       	addc.b	@r9+,	r5	
+ 3c0:	6c 64       	addc.b	@r4,	r12	
+ 3c2:	64 2f       	jc	$-310    	;abs 0x28c
+ 3c4:	67 63       	addc.b	#2,	r7	;r3 As==10
+ 3c6:	63 2d       	jc	$+712    	;abs 0x68e
+ 3c8:	6d 73       	subc.b	#2,	r13	;r3 As==10
+ 3ca:	70 34       	jge	$+226    	;abs 0x4ac
+ 3cc:	33 30       	jn	$+104    	;abs 0x434
+ 3ce:	2d 34       	jge	$+92     	;abs 0x42a
+ 3d0:	2e 35       	jge	$+606    	;abs 0x62e
+ 3d2:	2e 33       	jn	$-418    	;abs 0x230
+ 3d4:	7e 6d       	addc.b	@r13+,	r14	
+ 3d6:	73 70       	.word	0x7073;	????	Illegal as 2-op instr
+ 3d8:	67 63       	addc.b	#2,	r7	;r3 As==10
+ 3da:	63 2d       	jc	$+712    	;abs 0x6a2
+ 3dc:	34 2e       	jc	$-918    	;abs 0x46
+ 3de:	35 2e       	jc	$-916    	;abs 0x4a
+ 3e0:	32 2d       	jc	$+614    	;abs 0x646
+ 3e2:	32 30       	jn	$+102    	;abs 0x448
+ 3e4:	31 31       	jn	$+612    	;abs 0x648
+ 3e6:	30 36       	jge	$-926    	;abs 0x48
+ 3e8:	31 32       	jn	$-924    	;abs 0x4c
+ 3ea:	2f 62       	addc	#4,	r15	;r2 As==10
+ 3ec:	75 69       	addc.b	@r9+,	r5	
+ 3ee:	6c 64       	addc.b	@r4,	r12	
+ 3f0:	2d 72       	subc	#4,	r13	;r2 As==10
+ 3f2:	65 73       	subc.b	#2,	r5	;r3 As==10
+ 3f4:	75 6c       	addc.b	@r12+,	r5	
+ 3f6:	74 2f       	jc	$-278    	;abs 0x2e0
+ 3f8:	67 63       	addc.b	#2,	r7	;r3 As==10
+ 3fa:	63 00 47 4e 	mova	r0,	&0x34e47
+ 3fe:	55 20       	jnz	$+172    	;abs 0x4aa
+ 400:	41 53       	add.b	#0,	r1	;r3 As==00
+ 402:	20 32       	jn	$-958    	;abs 0x44
+ 404:	2e 32       	jn	$-930    	;abs 0x62
+ 406:	31 2e       	jc	$-924    	;abs 0x6a
+ 408:	35 32       	jn	$-916    	;abs 0x74
+ 40a:	00 01       	bra	@r1		
+ 40c:	80 c1 00 00 	bic	r1,	0x0000	;PC rel. 0x00410
+ 410:	00 02       	bra	#4		;r2 As==10
+ 412:	00 c4       	bic	r4,	r0	
+ 414:	00 00       	bra	@r0		
+ 416:	00 02       	bra	#4		;r2 As==10
+ 418:	01 b3       	bit	#0,	r1	;r3 As==00
+ 41a:	01 00       	mova	@r0,	r1	
+ 41c:	00 0e       	bra	@r14		
+ 41e:	c2 24       	jz	$+390    	;abs 0x5a4
+ 420:	c2 2f       	jc	$-122    	;abs 0x3a6
+ 422:	62 75       	subc.b	@r5,	r2	
+ 424:	69 6c       	addc.b	@r12,	r9	
+ 426:	64 2f       	jc	$-310    	;abs 0x2f0
+ 428:	62 75       	subc.b	@r5,	r2	
+ 42a:	69 6c       	addc.b	@r12,	r9	
+ 42c:	64 64       	addc.b	@r4,	r4	
+ 42e:	2f 67       	addc	@r7,	r15	
+ 430:	63 63       	.word	0x6363;	????	Illegal as 2-op instr
+ 432:	2d 6d       	addc	@r13,	r13	
+ 434:	73 70       	.word	0x7073;	????	Illegal as 2-op instr
+ 436:	34 33       	jn	$-406    	;abs 0x2a0
+ 438:	30 2d       	jc	$+610    	;abs 0x69a
+ 43a:	34 2e       	jc	$-918    	;abs 0xa4
+ 43c:	35 2e       	jc	$-916    	;abs 0xa8
+ 43e:	33 7e       	.word	0x7e33;	????	Illegal as 2-op instr
+ 440:	6d 73       	subc.b	#2,	r13	;r3 As==10
+ 442:	70 67       	addc.b	@r7+,	r0	
+ 444:	63 63       	.word	0x6363;	????	Illegal as 2-op instr
+ 446:	2d 34       	jge	$+92     	;abs 0x4a2
+ 448:	2e 35       	jge	$+606    	;abs 0x6a6
+ 44a:	2e 32       	jn	$-930    	;abs 0xa8
+ 44c:	2d 32       	jn	$-932    	;abs 0xa8
+ 44e:	30 31       	jn	$+610    	;abs 0x6b0
+ 450:	31 30       	jn	$+100    	;abs 0x4b4
+ 452:	36 31       	jn	$+622    	;abs 0x6c0
+ 454:	32 2f       	jc	$-410    	;abs 0x2ba
+ 456:	2e 2f       	jc	$-418    	;abs 0x2b4
+ 458:	67 63       	addc.b	#2,	r7	;r3 As==10
+ 45a:	63 2d       	jc	$+712    	;abs 0x722
+ 45c:	34 2e       	jc	$-918    	;abs 0xc6
+ 45e:	35 2e       	jc	$-916    	;abs 0xca
+ 460:	33 2f       	jc	$-408    	;abs 0x2c8
+ 462:	67 63       	addc.b	#2,	r7	;r3 As==10
+ 464:	63 2f       	jc	$-312    	;abs 0x32c
+ 466:	63 6f       	.word	0x6f63;	????	Illegal as 2-op instr
+ 468:	6e 66       	addc.b	@r6,	r14	
+ 46a:	69 67       	addc.b	@r7,	r9	
+ 46c:	2f 6d       	addc	@r13,	r15	
+ 46e:	73 70       	.word	0x7073;	????	Illegal as 2-op instr
+ 470:	34 33       	jn	$-406    	;abs 0x2da
+ 472:	30 2f       	jc	$-414    	;abs 0x2d4
+ 474:	63 72       	.word	0x7263;	????	Illegal as 2-op instr
+ 476:	74 30       	jn	$+234    	;abs 0x560
+ 478:	2e 53       	incd	r14		
+ 47a:	00 2f       	jc	$-510    	;abs 0x27c
+ 47c:	62 75       	subc.b	@r5,	r2	
+ 47e:	69 6c       	addc.b	@r12,	r9	
+ 480:	64 2f       	jc	$-310    	;abs 0x34a
+ 482:	62 75       	subc.b	@r5,	r2	
+ 484:	69 6c       	addc.b	@r12,	r9	
+ 486:	64 64       	addc.b	@r4,	r4	
+ 488:	2f 67       	addc	@r7,	r15	
+ 48a:	63 63       	.word	0x6363;	????	Illegal as 2-op instr
+ 48c:	2d 6d       	addc	@r13,	r13	
+ 48e:	73 70       	.word	0x7073;	????	Illegal as 2-op instr
+ 490:	34 33       	jn	$-406    	;abs 0x2fa
+ 492:	30 2d       	jc	$+610    	;abs 0x6f4
+ 494:	34 2e       	jc	$-918    	;abs 0xfe
+ 496:	35 2e       	jc	$-916    	;abs 0x102
+ 498:	33 7e       	.word	0x7e33;	????	Illegal as 2-op instr
+ 49a:	6d 73       	subc.b	#2,	r13	;r3 As==10
+ 49c:	70 67       	addc.b	@r7+,	r0	
+ 49e:	63 63       	.word	0x6363;	????	Illegal as 2-op instr
+ 4a0:	2d 34       	jge	$+92     	;abs 0x4fc
+ 4a2:	2e 35       	jge	$+606    	;abs 0x700
+ 4a4:	2e 32       	jn	$-930    	;abs 0x102
+ 4a6:	2d 32       	jn	$-932    	;abs 0x102
+ 4a8:	30 31       	jn	$+610    	;abs 0x70a
+ 4aa:	31 30       	jn	$+100    	;abs 0x50e
+ 4ac:	36 31       	jn	$+622    	;abs 0x71a
+ 4ae:	32 2f       	jc	$-410    	;abs 0x314
+ 4b0:	62 75       	subc.b	@r5,	r2	
+ 4b2:	69 6c       	addc.b	@r12,	r9	
+ 4b4:	64 2d       	jc	$+714    	;abs 0x77e
+ 4b6:	72 65       	addc.b	@r5+,	r2	
+ 4b8:	73 75       	.word	0x7573;	????	Illegal as 2-op instr
+ 4ba:	6c 74       	subc.b	@r4,	r12	
+ 4bc:	2f 67       	addc	@r7,	r15	
+ 4be:	63 63       	.word	0x6363;	????	Illegal as 2-op instr
+ 4c0:	00 47       	br	r7		
+ 4c2:	4e 55       	add.b	r5,	r14	
+ 4c4:	20 41       	br	@r1		
+ 4c6:	53 20       	jnz	$+168    	;abs 0x56e
+ 4c8:	32 2e       	jc	$-922    	;abs 0x12e
+ 4ca:	32 31       	jn	$+614    	;abs 0x730
+ 4cc:	2e 35       	jge	$+606    	;abs 0x72a
+ 4ce:	32 00 01 80 	mova	0x8001,	r2	;PC rel. 0xf84d1
+ 4d2:	c1 00       	mova	r0,	r1	
+ 4d4:	00 00       	bra	@r0		
+ 4d6:	02 00       	mova	@r0,	r2	
+ 4d8:	d8 00       	cmpa	r0,	r8	
+ 4da:	00 00       	bra	@r0		
+ 4dc:	02 01       	mova	@r1,	r2	
+ 4de:	41 02       	rlam.a	#1,	r1	
+ 4e0:	00 00       	bra	@r0		
+ 4e2:	24 c2       	bic	#4,	r4	;r2 As==10
+ 4e4:	38 c2       	bic	#8,	r8	;r2 As==11
+ 4e6:	2f 62       	addc	#4,	r15	;r2 As==10
+ 4e8:	75 69       	addc.b	@r9+,	r5	
+ 4ea:	6c 64       	addc.b	@r4,	r12	
+ 4ec:	2f 62       	addc	#4,	r15	;r2 As==10
+ 4ee:	75 69       	addc.b	@r9+,	r5	
+ 4f0:	6c 64       	addc.b	@r4,	r12	
+ 4f2:	64 2f       	jc	$-310    	;abs 0x3bc
+ 4f4:	67 63       	addc.b	#2,	r7	;r3 As==10
+ 4f6:	63 2d       	jc	$+712    	;abs 0x7be
+ 4f8:	6d 73       	subc.b	#2,	r13	;r3 As==10
+ 4fa:	70 34       	jge	$+226    	;abs 0x5dc
+ 4fc:	33 30       	jn	$+104    	;abs 0x564
+ 4fe:	2d 34       	jge	$+92     	;abs 0x55a
+ 500:	2e 35       	jge	$+606    	;abs 0x75e
+ 502:	2e 33       	jn	$-418    	;abs 0x360
+ 504:	7e 6d       	addc.b	@r13+,	r14	
+ 506:	73 70       	.word	0x7073;	????	Illegal as 2-op instr
+ 508:	67 63       	addc.b	#2,	r7	;r3 As==10
+ 50a:	63 2d       	jc	$+712    	;abs 0x7d2
+ 50c:	34 2e       	jc	$-918    	;abs 0x176
+ 50e:	35 2e       	jc	$-916    	;abs 0x17a
+ 510:	32 2d       	jc	$+614    	;abs 0x776
+ 512:	32 30       	jn	$+102    	;abs 0x578
+ 514:	31 31       	jn	$+612    	;abs 0x778
+ 516:	30 36       	jge	$-926    	;abs 0x178
+ 518:	31 32       	jn	$-924    	;abs 0x17c
+ 51a:	2f 2e       	jc	$-928    	;abs 0x17a
+ 51c:	2f 67       	addc	@r7,	r15	
+ 51e:	63 63       	.word	0x6363;	????	Illegal as 2-op instr
+ 520:	2d 34       	jge	$+92     	;abs 0x57c
+ 522:	2e 35       	jge	$+606    	;abs 0x780
+ 524:	2e 33       	jn	$-418    	;abs 0x382
+ 526:	2f 67       	addc	@r7,	r15	
+ 528:	63 63       	.word	0x6363;	????	Illegal as 2-op instr
+ 52a:	2f 63       	addc	#2,	r15	;r3 As==10
+ 52c:	6f 6e       	addc.b	@r14,	r15	
+ 52e:	66 69       	addc.b	@r9,	r6	
+ 530:	67 2f       	jc	$-304    	;abs 0x400
+ 532:	6d 73       	subc.b	#2,	r13	;r3 As==10
+ 534:	70 34       	jge	$+226    	;abs 0x616
+ 536:	33 30       	jn	$+104    	;abs 0x59e
+ 538:	2f 63       	addc	#2,	r15	;r3 As==10
+ 53a:	72 74       	subc.b	@r4+,	r2	
+ 53c:	30 2e       	jc	$-926    	;abs 0x19e
+ 53e:	53 00       	rrcm	#1,	#0	;r3 As==00
+ 540:	2f 62       	addc	#4,	r15	;r2 As==10
+ 542:	75 69       	addc.b	@r9+,	r5	
+ 544:	6c 64       	addc.b	@r4,	r12	
+ 546:	2f 62       	addc	#4,	r15	;r2 As==10
+ 548:	75 69       	addc.b	@r9+,	r5	
+ 54a:	6c 64       	addc.b	@r4,	r12	
+ 54c:	64 2f       	jc	$-310    	;abs 0x416
+ 54e:	67 63       	addc.b	#2,	r7	;r3 As==10
+ 550:	63 2d       	jc	$+712    	;abs 0x818
+ 552:	6d 73       	subc.b	#2,	r13	;r3 As==10
+ 554:	70 34       	jge	$+226    	;abs 0x636
+ 556:	33 30       	jn	$+104    	;abs 0x5be
+ 558:	2d 34       	jge	$+92     	;abs 0x5b4
+ 55a:	2e 35       	jge	$+606    	;abs 0x7b8
+ 55c:	2e 33       	jn	$-418    	;abs 0x3ba
+ 55e:	7e 6d       	addc.b	@r13+,	r14	
+ 560:	73 70       	.word	0x7073;	????	Illegal as 2-op instr
+ 562:	67 63       	addc.b	#2,	r7	;r3 As==10
+ 564:	63 2d       	jc	$+712    	;abs 0x82c
+ 566:	34 2e       	jc	$-918    	;abs 0x1d0
+ 568:	35 2e       	jc	$-916    	;abs 0x1d4
+ 56a:	32 2d       	jc	$+614    	;abs 0x7d0
+ 56c:	32 30       	jn	$+102    	;abs 0x5d2
+ 56e:	31 31       	jn	$+612    	;abs 0x7d2
+ 570:	30 36       	jge	$-926    	;abs 0x1d2
+ 572:	31 32       	jn	$-924    	;abs 0x1d6
+ 574:	2f 62       	addc	#4,	r15	;r2 As==10
+ 576:	75 69       	addc.b	@r9+,	r5	
+ 578:	6c 64       	addc.b	@r4,	r12	
+ 57a:	2d 72       	subc	#4,	r13	;r2 As==10
+ 57c:	65 73       	subc.b	#2,	r5	;r3 As==10
+ 57e:	75 6c       	addc.b	@r12+,	r5	
+ 580:	74 2f       	jc	$-278    	;abs 0x46a
+ 582:	67 63       	addc.b	#2,	r7	;r3 As==10
+ 584:	63 00 47 4e 	mova	r0,	&0x34e47
+ 588:	55 20       	jnz	$+172    	;abs 0x634
+ 58a:	41 53       	add.b	#0,	r1	;r3 As==00
+ 58c:	20 32       	jn	$-958    	;abs 0x1ce
+ 58e:	2e 32       	jn	$-930    	;abs 0x1ec
+ 590:	31 2e       	jc	$-924    	;abs 0x1f4
+ 592:	35 32       	jn	$-916    	;abs 0x1fe
+ 594:	00 01       	bra	@r1		
+ 596:	80 c1 00 00 	bic	r1,	0x0000	;PC rel. 0x0059a
+ 59a:	00 02       	bra	#4		;r2 As==10
+ 59c:	00 ec       	xor	r12,	r0	
+ 59e:	00 00       	bra	@r0		
+ 5a0:	00 02       	bra	#4		;r2 As==10
+ 5a2:	01 cf       	bic	r15,	r1	
+ 5a4:	02 00       	mova	@r0,	r2	
+ 5a6:	00 98       	cmp	r8,	r0	
+ 5a8:	c2 9e c2 2f 	cmp.b	r14,	&0x2fc2	
+ 5ac:	62 75       	subc.b	@r5,	r2	
+ 5ae:	69 6c       	addc.b	@r12,	r9	
+ 5b0:	64 2f       	jc	$-310    	;abs 0x47a
+ 5b2:	62 75       	subc.b	@r5,	r2	
+ 5b4:	69 6c       	addc.b	@r12,	r9	
+ 5b6:	64 64       	addc.b	@r4,	r4	
+ 5b8:	2f 67       	addc	@r7,	r15	
+ 5ba:	63 63       	.word	0x6363;	????	Illegal as 2-op instr
+ 5bc:	2d 6d       	addc	@r13,	r13	
+ 5be:	73 70       	.word	0x7073;	????	Illegal as 2-op instr
+ 5c0:	34 33       	jn	$-406    	;abs 0x42a
+ 5c2:	30 2d       	jc	$+610    	;abs 0x824
+ 5c4:	34 2e       	jc	$-918    	;abs 0x22e
+ 5c6:	35 2e       	jc	$-916    	;abs 0x232
+ 5c8:	33 7e       	.word	0x7e33;	????	Illegal as 2-op instr
+ 5ca:	6d 73       	subc.b	#2,	r13	;r3 As==10
+ 5cc:	70 67       	addc.b	@r7+,	r0	
+ 5ce:	63 63       	.word	0x6363;	????	Illegal as 2-op instr
+ 5d0:	2d 34       	jge	$+92     	;abs 0x62c
+ 5d2:	2e 35       	jge	$+606    	;abs 0x830
+ 5d4:	2e 32       	jn	$-930    	;abs 0x232
+ 5d6:	2d 32       	jn	$-932    	;abs 0x232
+ 5d8:	30 31       	jn	$+610    	;abs 0x83a
+ 5da:	31 30       	jn	$+100    	;abs 0x63e
+ 5dc:	36 31       	jn	$+622    	;abs 0x84a
+ 5de:	32 2f       	jc	$-410    	;abs 0x444
+ 5e0:	2e 2f       	jc	$-418    	;abs 0x43e
+ 5e2:	67 63       	addc.b	#2,	r7	;r3 As==10
+ 5e4:	63 2d       	jc	$+712    	;abs 0x8ac
+ 5e6:	34 2e       	jc	$-918    	;abs 0x250
+ 5e8:	35 2e       	jc	$-916    	;abs 0x254
+ 5ea:	33 2f       	jc	$-408    	;abs 0x452
+ 5ec:	67 63       	addc.b	#2,	r7	;r3 As==10
+ 5ee:	63 2f       	jc	$-312    	;abs 0x4b6
+ 5f0:	63 6f       	.word	0x6f63;	????	Illegal as 2-op instr
+ 5f2:	6e 66       	addc.b	@r6,	r14	
+ 5f4:	69 67       	addc.b	@r7,	r9	
+ 5f6:	2f 6d       	addc	@r13,	r15	
+ 5f8:	73 70       	.word	0x7073;	????	Illegal as 2-op instr
+ 5fa:	34 33       	jn	$-406    	;abs 0x464
+ 5fc:	30 2f       	jc	$-414    	;abs 0x45e
+ 5fe:	63 72       	.word	0x7263;	????	Illegal as 2-op instr
+ 600:	74 30       	jn	$+234    	;abs 0x6ea
+ 602:	2e 53       	incd	r14		
+ 604:	00 2f       	jc	$-510    	;abs 0x406
+ 606:	62 75       	subc.b	@r5,	r2	
+ 608:	69 6c       	addc.b	@r12,	r9	
+ 60a:	64 2f       	jc	$-310    	;abs 0x4d4
+ 60c:	62 75       	subc.b	@r5,	r2	
+ 60e:	69 6c       	addc.b	@r12,	r9	
+ 610:	64 64       	addc.b	@r4,	r4	
+ 612:	2f 67       	addc	@r7,	r15	
+ 614:	63 63       	.word	0x6363;	????	Illegal as 2-op instr
+ 616:	2d 6d       	addc	@r13,	r13	
+ 618:	73 70       	.word	0x7073;	????	Illegal as 2-op instr
+ 61a:	34 33       	jn	$-406    	;abs 0x484
+ 61c:	30 2d       	jc	$+610    	;abs 0x87e
+ 61e:	34 2e       	jc	$-918    	;abs 0x288
+ 620:	35 2e       	jc	$-916    	;abs 0x28c
+ 622:	33 7e       	.word	0x7e33;	????	Illegal as 2-op instr
+ 624:	6d 73       	subc.b	#2,	r13	;r3 As==10
+ 626:	70 67       	addc.b	@r7+,	r0	
+ 628:	63 63       	.word	0x6363;	????	Illegal as 2-op instr
+ 62a:	2d 34       	jge	$+92     	;abs 0x686
+ 62c:	2e 35       	jge	$+606    	;abs 0x88a
+ 62e:	2e 32       	jn	$-930    	;abs 0x28c
+ 630:	2d 32       	jn	$-932    	;abs 0x28c
+ 632:	30 31       	jn	$+610    	;abs 0x894
+ 634:	31 30       	jn	$+100    	;abs 0x698
+ 636:	36 31       	jn	$+622    	;abs 0x8a4
+ 638:	32 2f       	jc	$-410    	;abs 0x49e
+ 63a:	62 75       	subc.b	@r5,	r2	
+ 63c:	69 6c       	addc.b	@r12,	r9	
+ 63e:	64 2d       	jc	$+714    	;abs 0x908
+ 640:	72 65       	addc.b	@r5+,	r2	
+ 642:	73 75       	.word	0x7573;	????	Illegal as 2-op instr
+ 644:	6c 74       	subc.b	@r4,	r12	
+ 646:	2f 67       	addc	@r7,	r15	
+ 648:	63 63       	.word	0x6363;	????	Illegal as 2-op instr
+ 64a:	00 47       	br	r7		
+ 64c:	4e 55       	add.b	r5,	r14	
+ 64e:	20 41       	br	@r1		
+ 650:	53 20       	jnz	$+168    	;abs 0x6f8
+ 652:	32 2e       	jc	$-922    	;abs 0x2b8
+ 654:	32 31       	jn	$+614    	;abs 0x8ba
+ 656:	2e 35       	jge	$+606    	;abs 0x8b4
+ 658:	32 00 01 80 	mova	0x8001,	r2	;PC rel. 0xf865b
+ 65c:	c1 00       	mova	r0,	r1	
+ 65e:	00 00       	bra	@r0		
+ 660:	02 00       	mova	@r0,	r2	
+ 662:	00 01       	bra	@r1		
+ 664:	00 00       	bra	@r0		
+ 666:	02 01       	mova	@r1,	r2	
+ 668:	58 03       	rrum	#1,	r8	
+ 66a:	00 00       	bra	@r0		
+ 66c:	cc c2 ce c2 	bic.b	r2,	-15666(r12);0xc2ce(r12)
+ 670:	2f 62       	addc	#4,	r15	;r2 As==10
+ 672:	75 69       	addc.b	@r9+,	r5	
+ 674:	6c 64       	addc.b	@r4,	r12	
+ 676:	2f 62       	addc	#4,	r15	;r2 As==10
+ 678:	75 69       	addc.b	@r9+,	r5	
+ 67a:	6c 64       	addc.b	@r4,	r12	
+ 67c:	64 2f       	jc	$-310    	;abs 0x546
+ 67e:	67 63       	addc.b	#2,	r7	;r3 As==10
+ 680:	63 2d       	jc	$+712    	;abs 0x948
+ 682:	6d 73       	subc.b	#2,	r13	;r3 As==10
+ 684:	70 34       	jge	$+226    	;abs 0x766
+ 686:	33 30       	jn	$+104    	;abs 0x6ee
+ 688:	2d 34       	jge	$+92     	;abs 0x6e4
+ 68a:	2e 35       	jge	$+606    	;abs 0x8e8
+ 68c:	2e 33       	jn	$-418    	;abs 0x4ea
+ 68e:	7e 6d       	addc.b	@r13+,	r14	
+ 690:	73 70       	.word	0x7073;	????	Illegal as 2-op instr
+ 692:	67 63       	addc.b	#2,	r7	;r3 As==10
+ 694:	63 2d       	jc	$+712    	;abs 0x95c
+ 696:	34 2e       	jc	$-918    	;abs 0x300
+ 698:	35 2e       	jc	$-916    	;abs 0x304
+ 69a:	32 2d       	jc	$+614    	;abs 0x900
+ 69c:	32 30       	jn	$+102    	;abs 0x702
+ 69e:	31 31       	jn	$+612    	;abs 0x902
+ 6a0:	30 36       	jge	$-926    	;abs 0x302
+ 6a2:	31 32       	jn	$-924    	;abs 0x306
+ 6a4:	2f 2e       	jc	$-928    	;abs 0x304
+ 6a6:	2f 67       	addc	@r7,	r15	
+ 6a8:	63 63       	.word	0x6363;	????	Illegal as 2-op instr
+ 6aa:	2d 34       	jge	$+92     	;abs 0x706
+ 6ac:	2e 35       	jge	$+606    	;abs 0x90a
+ 6ae:	2e 33       	jn	$-418    	;abs 0x50c
+ 6b0:	2f 67       	addc	@r7,	r15	
+ 6b2:	63 63       	.word	0x6363;	????	Illegal as 2-op instr
+ 6b4:	2f 63       	addc	#2,	r15	;r3 As==10
+ 6b6:	6f 6e       	addc.b	@r14,	r15	
+ 6b8:	66 69       	addc.b	@r9,	r6	
+ 6ba:	67 2f       	jc	$-304    	;abs 0x58a
+ 6bc:	6d 73       	subc.b	#2,	r13	;r3 As==10
+ 6be:	70 34       	jge	$+226    	;abs 0x7a0
+ 6c0:	33 30       	jn	$+104    	;abs 0x728
+ 6c2:	2f 63       	addc	#2,	r15	;r3 As==10
+ 6c4:	72 74       	subc.b	@r4+,	r2	
+ 6c6:	30 2e       	jc	$-926    	;abs 0x328
+ 6c8:	53 00       	rrcm	#1,	#0	;r3 As==00
+ 6ca:	2f 62       	addc	#4,	r15	;r2 As==10
+ 6cc:	75 69       	addc.b	@r9+,	r5	
+ 6ce:	6c 64       	addc.b	@r4,	r12	
+ 6d0:	2f 62       	addc	#4,	r15	;r2 As==10
+ 6d2:	75 69       	addc.b	@r9+,	r5	
+ 6d4:	6c 64       	addc.b	@r4,	r12	
+ 6d6:	64 2f       	jc	$-310    	;abs 0x5a0
+ 6d8:	67 63       	addc.b	#2,	r7	;r3 As==10
+ 6da:	63 2d       	jc	$+712    	;abs 0x9a2
+ 6dc:	6d 73       	subc.b	#2,	r13	;r3 As==10
+ 6de:	70 34       	jge	$+226    	;abs 0x7c0
+ 6e0:	33 30       	jn	$+104    	;abs 0x748
+ 6e2:	2d 34       	jge	$+92     	;abs 0x73e
+ 6e4:	2e 35       	jge	$+606    	;abs 0x942
+ 6e6:	2e 33       	jn	$-418    	;abs 0x544
+ 6e8:	7e 6d       	addc.b	@r13+,	r14	
+ 6ea:	73 70       	.word	0x7073;	????	Illegal as 2-op instr
+ 6ec:	67 63       	addc.b	#2,	r7	;r3 As==10
+ 6ee:	63 2d       	jc	$+712    	;abs 0x9b6
+ 6f0:	34 2e       	jc	$-918    	;abs 0x35a
+ 6f2:	35 2e       	jc	$-916    	;abs 0x35e
+ 6f4:	32 2d       	jc	$+614    	;abs 0x95a
+ 6f6:	32 30       	jn	$+102    	;abs 0x75c
+ 6f8:	31 31       	jn	$+612    	;abs 0x95c
+ 6fa:	30 36       	jge	$-926    	;abs 0x35c
+ 6fc:	31 32       	jn	$-924    	;abs 0x360
+ 6fe:	2f 62       	addc	#4,	r15	;r2 As==10
+ 700:	75 69       	addc.b	@r9+,	r5	
+ 702:	6c 64       	addc.b	@r4,	r12	
+ 704:	2d 72       	subc	#4,	r13	;r2 As==10
+ 706:	65 73       	subc.b	#2,	r5	;r3 As==10
+ 708:	75 6c       	addc.b	@r12+,	r5	
+ 70a:	74 2f       	jc	$-278    	;abs 0x5f4
+ 70c:	67 63       	addc.b	#2,	r7	;r3 As==10
+ 70e:	63 00 47 4e 	mova	r0,	&0x34e47
+ 712:	55 20       	jnz	$+172    	;abs 0x7be
+ 714:	41 53       	add.b	#0,	r1	;r3 As==00
+ 716:	20 32       	jn	$-958    	;abs 0x358
+ 718:	2e 32       	jn	$-930    	;abs 0x376
+ 71a:	31 2e       	jc	$-924    	;abs 0x37e
+ 71c:	35 32       	jn	$-916    	;abs 0x388
+ 71e:	00 01       	bra	@r1		
+ 720:	80 00       	Address 0x0000000000000720 is out of bounds.
+Address 0x0000000000000722 is out of bounds.
+and.b	@r15+,	-1(r15)	;0xffff(r15)
+
+Disassembly of section .debug_abbrev:
+
+00000000 <.debug_abbrev>:
+   0:	01 11       	rra	r1		
+   2:	01 25       	jz	$+516    	;abs 0x206
+   4:	0e 13       	reti			;return from interupt
+   6:	0b 03       	mova	#2,	r11	;r3 As==10
+   8:	0e 1b 0e 11 	.rpt	#14
+				rrax	r14		
+   c:	01 52       	add	r2,	r1	
+   e:	01 55       	add	r5,	r1	
+  10:	06 10       	rrc	r6		
+  12:	06 00       	mova	@r0,	r6	
+  14:	00 02       	bra	#4		;r2 As==10
+  16:	24 00 0b 0b 	mova	&0x00b0b,r4	
+  1a:	3e 0b 03 0e 	mova	3587(r11),r14	;0x0e03(r11)
+  1e:	00 00       	bra	@r0		
+  20:	03 24       	jz	$+8      	;abs 0x28
+  22:	00 0b       	bra	@r11		
+  24:	0b 3e       	jmp	$-1000   	;abs 0xfc3c
+  26:	0b 03       	mova	#2,	r11	;r3 As==10
+  28:	08 00       	mova	@r0,	r8	
+  2a:	00 04       	bra	@r4		
+  2c:	2e 00 3f 0c 	mova	&0x00c3f,r14	
+  30:	03 0e       	.word	0x0e03;	????	Illegal as address instr
+  32:	3a 0b 3b 0b 	mova	2875(r11),r10	;0x0b3b(r11)
+  36:	27 0c 49 13 	mova	&0xc1349,r7	
+  3a:	11 01       	mova	@r1+,	r1	
+  3c:	12 01       	mova	@r1+,	r2	
+  3e:	40 0a       	rlam.a	#3,	r0	
+  40:	00 00       	bra	@r0		
+  42:	05 2e       	jc	$-1012   	;abs 0xfc4e
+  44:	00 3f       	jmp	$-510    	;abs 0xfe46
+  46:	0c 03       	mova	#2,	r12	;r3 As==10
+  48:	0e 3a       	jl	$-994    	;abs 0xfc66
+  4a:	0b 3b       	jl	$-488    	;abs 0xfe62
+  4c:	0b 27       	jz	$-488    	;abs 0xfe64
+  4e:	0c 11       	rra	r12		
+  50:	01 12       	push	r1		
+  52:	01 40       	mov	r0,	r1	
+  54:	06 00       	mova	@r0,	r6	
+  56:	00 06       	bra	@r6		
+  58:	34 00 03 0e 	mova	0x0e03,	r4	;PC rel. 0x00e5d
+  5c:	3a 0b 3b 05 	mova	1339(r11),r10	;0x053b(r11)
+  60:	87 40 0e 49 	mov	r0,	18702(r7);0x490e(r7)
+  64:	13 3f       	jmp	$-472    	;abs 0xfe8c
+  66:	0c 3c       	jmp	$+26     	;abs 0x80
+  68:	0c 00       	mova	@r0,	r12	
+  6a:	00 07       	bra	@r7		
+  6c:	35 00 49 13 	mova	0x1349,	r5	;PC rel. 0x013b7
+  70:	00 00       	bra	@r0		
+  72:	08 26       	jz	$-1006   	;abs 0xfc84
+  74:	00 49       	br	r9		
+  76:	13 00       	.word	0x0013;	????	Illegal as address instr
+  78:	00 09       	bra	@r9		
+  7a:	34 00 03 0e 	mova	0x0e03,	r4	;PC rel. 0x00e7f
+  7e:	3a 0b 3b 0b 	mova	2875(r11),r10	;0x0b3b(r11)
+  82:	49 13       	calla	r9		
+  84:	3f 0c 3c 0c 	mova	3132(r12),r15	;0x0c3c(r12)
+  88:	00 00       	bra	@r0		
+  8a:	0a 34       	jge	$+22     	;abs 0xa0
+  8c:	00 03       	bra	#2		;r3 As==10
+  8e:	0e 3a       	jl	$-994    	;abs 0xfcac
+  90:	0b 3b       	jl	$-488    	;abs 0xfea8
+  92:	0b 49       	mov	r9,	r11	
+  94:	13 3f       	jmp	$-472    	;abs 0xfebc
+  96:	0c 02       	mova	#4,	r12	;r2 As==10
+  98:	0a 00       	mova	@r0,	r10	
+  9a:	00 00       	bra	@r0		
+  9c:	01 11       	rra	r1		
+  9e:	00 10       	rrc	r0		
+  a0:	06 11       	rra	r6		
+  a2:	01 12       	push	r1		
+  a4:	01 03       	mova	#2,	r1	;r3 As==10
+  a6:	08 1b       	.word	0x1b08;	????	
+  a8:	08 25       	jz	$+530    	;abs 0x2ba
+  aa:	08 13       	reti			;return from interupt
+  ac:	05 00       	mova	@r0,	r5	
+  ae:	00 00       	bra	@r0		
+  b0:	01 11       	rra	r1		
+  b2:	00 10       	rrc	r0		
+  b4:	06 11       	rra	r6		
+  b6:	01 12       	push	r1		
+  b8:	01 03       	mova	#2,	r1	;r3 As==10
+  ba:	08 1b       	.word	0x1b08;	????	
+  bc:	08 25       	jz	$+530    	;abs 0x2ce
+  be:	08 13       	reti			;return from interupt
+  c0:	05 00       	mova	@r0,	r5	
+  c2:	00 00       	bra	@r0		
+  c4:	01 11       	rra	r1		
+  c6:	00 10       	rrc	r0		
+  c8:	06 11       	rra	r6		
+  ca:	01 12       	push	r1		
+  cc:	01 03       	mova	#2,	r1	;r3 As==10
+  ce:	08 1b       	.word	0x1b08;	????	
+  d0:	08 25       	jz	$+530    	;abs 0x2e2
+  d2:	08 13       	reti			;return from interupt
+  d4:	05 00       	mova	@r0,	r5	
+  d6:	00 00       	bra	@r0		
+  d8:	01 11       	rra	r1		
+  da:	00 10       	rrc	r0		
+  dc:	06 11       	rra	r6		
+  de:	01 12       	push	r1		
+  e0:	01 03       	mova	#2,	r1	;r3 As==10
+  e2:	08 1b       	.word	0x1b08;	????	
+  e4:	08 25       	jz	$+530    	;abs 0x2f6
+  e6:	08 13       	reti			;return from interupt
+  e8:	05 00       	mova	@r0,	r5	
+  ea:	00 00       	bra	@r0		
+  ec:	01 11       	rra	r1		
+  ee:	00 10       	rrc	r0		
+  f0:	06 11       	rra	r6		
+  f2:	01 12       	push	r1		
+  f4:	01 03       	mova	#2,	r1	;r3 As==10
+  f6:	08 1b       	.word	0x1b08;	????	
+  f8:	08 25       	jz	$+530    	;abs 0x30a
+  fa:	08 13       	reti			;return from interupt
+  fc:	05 00       	mova	@r0,	r5	
+  fe:	00 00       	bra	@r0		
+ 100:	01 11       	rra	r1		
+ 102:	00 10       	rrc	r0		
+ 104:	06 11       	rra	r6		
+ 106:	01 12       	push	r1		
+ 108:	01 03       	mova	#2,	r1	;r3 As==10
+ 10a:	08 1b       	.word	0x1b08;	????	
+ 10c:	08 25       	jz	$+530    	;abs 0x31e
+ 10e:	08 13       	reti			;return from interupt
+ 110:	05 00       	mova	@r0,	r5	
+	...
+
+Disassembly of section .debug_line:
+
+00000000 <.debug_line>:
+   0:	9d 00 00 00 	cmpa	#0x00000,r13	
+   4:	02 00       	mova	@r0,	r2	
+   6:	64 00 00 00 	mova	r0,	&0x40000
+   a:	01 01       	mova	@r1,	r1	
+   c:	fb 0e       	suba	r14,	r11	
+   e:	0d 00       	mova	@r0,	r13	
+  10:	01 01       	mova	@r1,	r1	
+  12:	01 01       	mova	@r1,	r1	
+  14:	00 00       	bra	@r0		
+  16:	00 01       	bra	@r1		
+  18:	00 00       	bra	@r0		
+  1a:	01 2f       	jc	$-508    	;abs 0xfe1e
+  1c:	75 73       	subc.b	#-1,	r5	;r3 As==11
+  1e:	72 2f       	jc	$-282    	;abs 0xff04
+  20:	6c 69       	addc.b	@r9,	r12	
+  22:	62 2f       	jc	$-314    	;abs 0xfee8
+  24:	67 63       	addc.b	#2,	r7	;r3 As==10
+  26:	63 2f       	jc	$-312    	;abs 0xfeee
+  28:	6d 73       	subc.b	#2,	r13	;r3 As==10
+  2a:	70 34       	jge	$+226    	;abs 0x10c
+  2c:	33 30       	jn	$+104    	;abs 0x94
+  2e:	2f 34       	jge	$+96     	;abs 0x8e
+  30:	2e 35       	jge	$+606    	;abs 0x28e
+  32:	2e 33       	jn	$-418    	;abs 0xfe90
+  34:	2f 2e       	jc	$-928    	;abs 0xfc94
+  36:	2e 2f       	jc	$-418    	;abs 0xfe94
+  38:	2e 2e       	jc	$-930    	;abs 0xfc96
+  3a:	2f 2e       	jc	$-928    	;abs 0xfc9a
+  3c:	2e 2f       	jc	$-418    	;abs 0xfe9a
+  3e:	2e 2e       	jc	$-930    	;abs 0xfc9c
+  40:	2f 6d       	addc	@r13,	r15	
+  42:	73 70       	.word	0x7073;	????	Illegal as 2-op instr
+  44:	34 33       	jn	$-406    	;abs 0xfeae
+  46:	30 2f       	jc	$-414    	;abs 0xfea8
+  48:	69 6e       	addc.b	@r14,	r9	
+  4a:	63 6c       	.word	0x6c63;	????	Illegal as 2-op instr
+  4c:	75 64       	addc.b	@r4+,	r5	
+  4e:	65 00 00 6d 	mova	r0,	&0x56d00
+  52:	61 69       	addc.b	@r9,	r1	
+  54:	6e 2e       	jc	$-802    	;abs 0xfd32
+  56:	63 00 00 00 	mova	r0,	&0x30000
+  5a:	00 6d       	addc	r13,	r0	
+  5c:	73 70       	.word	0x7073;	????	Illegal as 2-op instr
+  5e:	34 33       	jn	$-406    	;abs 0xfec8
+  60:	30 66       	addc	@r6+,	r0	
+  62:	72 35       	jge	$+742    	;abs 0x348
+  64:	37 33       	jn	$-400    	;abs 0xfed4
+  66:	39 2e       	jc	$-908    	;abs 0xfcda
+  68:	68 00 01 00 	mova	r0,	&0x80001
+  6c:	00 00       	bra	@r0		
+  6e:	00 03       	bra	#2		;r3 As==10
+  70:	02 38       	jl	$+6      	;abs 0x76
+  72:	c2 18 15 69 	addcx	92007(r9),r5	;0x16767(r9)
+  76:	67 67 
+  78:	4d 67       	addc.b	r7,	r13	
+  7a:	67 67       	addc.b	@r7,	r7	
+  7c:	69 68       	addc.b	@r8,	r9	
+  7e:	4b 67       	addc.b	r7,	r11	
+  80:	67 67       	addc.b	@r7,	r7	
+  82:	4c 4b       	mov.b	r11,	r12	
+  84:	30 67       	addc	@r7+,	r0	
+  86:	4c 02       	rlam.a	#1,	r12	
+  88:	02 00       	mova	@r0,	r2	
+  8a:	01 01       	mova	@r1,	r1	
+  8c:	00 03       	bra	#2		;r3 As==10
+  8e:	02 a2       	dadd	r2,	r2	
+  90:	c2 03       	mova	#0,	r2	;r3 As==00
+  92:	27 01 4b 67 	mova	&0x1674b,r7	
+  96:	4b 03       	rrum.a	#1,	r11	
+  98:	0d 82       	sub	r2,	r13	
+  9a:	83 6e       	addc	r14,	#1	;r3 As==01
+  9c:	02 06       	mova	@r6,	r2	
+  9e:	00 01       	bra	@r1		
+  a0:	01 84       	sub	r4,	r1	
+  a2:	00 00       	bra	@r0		
+  a4:	00 02       	bra	#4		;r2 As==10
+  a6:	00 70       	subc	r0,	r0	
+  a8:	00 00       	bra	@r0		
+  aa:	00 01       	bra	@r1		
+  ac:	01 fb       	and	r11,	r1	
+  ae:	0e 0d       	mova	@r13,	r14	
+  b0:	00 01       	bra	@r1		
+  b2:	01 01       	mova	@r1,	r1	
+  b4:	01 00       	mova	@r0,	r1	
+  b6:	00 00       	bra	@r0		
+  b8:	01 00       	mova	@r0,	r1	
+  ba:	00 01       	bra	@r1		
+  bc:	2f 62       	addc	#4,	r15	;r2 As==10
+  be:	75 69       	addc.b	@r9+,	r5	
+  c0:	6c 64       	addc.b	@r4,	r12	
+  c2:	2f 62       	addc	#4,	r15	;r2 As==10
+  c4:	75 69       	addc.b	@r9+,	r5	
+  c6:	6c 64       	addc.b	@r4,	r12	
+  c8:	64 2f       	jc	$-310    	;abs 0xff92
+  ca:	67 63       	addc.b	#2,	r7	;r3 As==10
+  cc:	63 2d       	jc	$+712    	;abs 0x394
+  ce:	6d 73       	subc.b	#2,	r13	;r3 As==10
+  d0:	70 34       	jge	$+226    	;abs 0x1b2
+  d2:	33 30       	jn	$+104    	;abs 0x13a
+  d4:	2d 34       	jge	$+92     	;abs 0x130
+  d6:	2e 35       	jge	$+606    	;abs 0x334
+  d8:	2e 33       	jn	$-418    	;abs 0xff36
+  da:	7e 6d       	addc.b	@r13+,	r14	
+  dc:	73 70       	.word	0x7073;	????	Illegal as 2-op instr
+  de:	67 63       	addc.b	#2,	r7	;r3 As==10
+  e0:	63 2d       	jc	$+712    	;abs 0x3a8
+  e2:	34 2e       	jc	$-918    	;abs 0xfd4c
+  e4:	35 2e       	jc	$-916    	;abs 0xfd50
+  e6:	32 2d       	jc	$+614    	;abs 0x34c
+  e8:	32 30       	jn	$+102    	;abs 0x14e
+  ea:	31 31       	jn	$+612    	;abs 0x34e
+  ec:	30 36       	jge	$-926    	;abs 0xfd4e
+  ee:	31 32       	jn	$-924    	;abs 0xfd52
+  f0:	2f 2e       	jc	$-928    	;abs 0xfd50
+  f2:	2f 67       	addc	@r7,	r15	
+  f4:	63 63       	.word	0x6363;	????	Illegal as 2-op instr
+  f6:	2d 34       	jge	$+92     	;abs 0x152
+  f8:	2e 35       	jge	$+606    	;abs 0x356
+  fa:	2e 33       	jn	$-418    	;abs 0xff58
+  fc:	2f 67       	addc	@r7,	r15	
+  fe:	63 63       	.word	0x6363;	????	Illegal as 2-op instr
+ 100:	2f 63       	addc	#2,	r15	;r3 As==10
+ 102:	6f 6e       	addc.b	@r14,	r15	
+ 104:	66 69       	addc.b	@r9,	r6	
+ 106:	67 2f       	jc	$-304    	;abs 0xffd6
+ 108:	6d 73       	subc.b	#2,	r13	;r3 As==10
+ 10a:	70 34       	jge	$+226    	;abs 0x1ec
+ 10c:	33 30       	jn	$+104    	;abs 0x174
+ 10e:	00 00       	bra	@r0		
+ 110:	63 72       	.word	0x7263;	????	Illegal as 2-op instr
+ 112:	74 30       	jn	$+234    	;abs 0x1fc
+ 114:	2e 53       	incd	r14		
+ 116:	00 01       	bra	@r1		
+ 118:	00 00       	bra	@r0		
+ 11a:	00 00       	bra	@r0		
+ 11c:	03 02       	.word	0x0203;	????	Illegal as address instr
+ 11e:	00 c2       	bic	r2,	r0	
+ 120:	03 f5       	.word	0xf503;	????	Illegal as 2-op instr
+ 122:	00 01       	bra	@r1		
+ 124:	02 04       	mova	@r4,	r2	
+ 126:	00 01       	bra	@r1		
+ 128:	01 86       	sub	r6,	r1	
+ 12a:	00 00       	bra	@r0		
+ 12c:	00 02       	bra	#4		;r2 As==10
+ 12e:	00 70       	subc	r0,	r0	
+ 130:	00 00       	bra	@r0		
+ 132:	00 01       	bra	@r1		
+ 134:	01 fb       	and	r11,	r1	
+ 136:	0e 0d       	mova	@r13,	r14	
+ 138:	00 01       	bra	@r1		
+ 13a:	01 01       	mova	@r1,	r1	
+ 13c:	01 00       	mova	@r0,	r1	
+ 13e:	00 00       	bra	@r0		
+ 140:	01 00       	mova	@r0,	r1	
+ 142:	00 01       	bra	@r1		
+ 144:	2f 62       	addc	#4,	r15	;r2 As==10
+ 146:	75 69       	addc.b	@r9+,	r5	
+ 148:	6c 64       	addc.b	@r4,	r12	
+ 14a:	2f 62       	addc	#4,	r15	;r2 As==10
+ 14c:	75 69       	addc.b	@r9+,	r5	
+ 14e:	6c 64       	addc.b	@r4,	r12	
+ 150:	64 2f       	jc	$-310    	;abs 0x1a
+ 152:	67 63       	addc.b	#2,	r7	;r3 As==10
+ 154:	63 2d       	jc	$+712    	;abs 0x41c
+ 156:	6d 73       	subc.b	#2,	r13	;r3 As==10
+ 158:	70 34       	jge	$+226    	;abs 0x23a
+ 15a:	33 30       	jn	$+104    	;abs 0x1c2
+ 15c:	2d 34       	jge	$+92     	;abs 0x1b8
+ 15e:	2e 35       	jge	$+606    	;abs 0x3bc
+ 160:	2e 33       	jn	$-418    	;abs 0xffbe
+ 162:	7e 6d       	addc.b	@r13+,	r14	
+ 164:	73 70       	.word	0x7073;	????	Illegal as 2-op instr
+ 166:	67 63       	addc.b	#2,	r7	;r3 As==10
+ 168:	63 2d       	jc	$+712    	;abs 0x430
+ 16a:	34 2e       	jc	$-918    	;abs 0xfdd4
+ 16c:	35 2e       	jc	$-916    	;abs 0xfdd8
+ 16e:	32 2d       	jc	$+614    	;abs 0x3d4
+ 170:	32 30       	jn	$+102    	;abs 0x1d6
+ 172:	31 31       	jn	$+612    	;abs 0x3d6
+ 174:	30 36       	jge	$-926    	;abs 0xfdd6
+ 176:	31 32       	jn	$-924    	;abs 0xfdda
+ 178:	2f 2e       	jc	$-928    	;abs 0xfdd8
+ 17a:	2f 67       	addc	@r7,	r15	
+ 17c:	63 63       	.word	0x6363;	????	Illegal as 2-op instr
+ 17e:	2d 34       	jge	$+92     	;abs 0x1da
+ 180:	2e 35       	jge	$+606    	;abs 0x3de
+ 182:	2e 33       	jn	$-418    	;abs 0xffe0
+ 184:	2f 67       	addc	@r7,	r15	
+ 186:	63 63       	.word	0x6363;	????	Illegal as 2-op instr
+ 188:	2f 63       	addc	#2,	r15	;r3 As==10
+ 18a:	6f 6e       	addc.b	@r14,	r15	
+ 18c:	66 69       	addc.b	@r9,	r6	
+ 18e:	67 2f       	jc	$-304    	;abs 0x5e
+ 190:	6d 73       	subc.b	#2,	r13	;r3 As==10
+ 192:	70 34       	jge	$+226    	;abs 0x274
+ 194:	33 30       	jn	$+104    	;abs 0x1fc
+ 196:	00 00       	bra	@r0		
+ 198:	63 72       	.word	0x7263;	????	Illegal as 2-op instr
+ 19a:	74 30       	jn	$+234    	;abs 0x284
+ 19c:	2e 53       	incd	r14		
+ 19e:	00 01       	bra	@r1		
+ 1a0:	00 00       	bra	@r0		
+ 1a2:	00 00       	bra	@r0		
+ 1a4:	03 02       	.word	0x0203;	????	Illegal as address instr
+ 1a6:	04 c2       	bic	r2,	r4	
+ 1a8:	03 8a       	.word	0x8a03;	????	Illegal as 2-op instr
+ 1aa:	01 01       	mova	@r1,	r1	
+ 1ac:	4b 2f       	jc	$-360    	;abs 0x44
+ 1ae:	02 04       	mova	@r4,	r2	
+ 1b0:	00 01       	bra	@r1		
+ 1b2:	01 8a       	sub	r10,	r1	
+ 1b4:	00 00       	bra	@r0		
+ 1b6:	00 02       	bra	#4		;r2 As==10
+ 1b8:	00 70       	subc	r0,	r0	
+ 1ba:	00 00       	bra	@r0		
+ 1bc:	00 01       	bra	@r1		
+ 1be:	01 fb       	and	r11,	r1	
+ 1c0:	0e 0d       	mova	@r13,	r14	
+ 1c2:	00 01       	bra	@r1		
+ 1c4:	01 01       	mova	@r1,	r1	
+ 1c6:	01 00       	mova	@r0,	r1	
+ 1c8:	00 00       	bra	@r0		
+ 1ca:	01 00       	mova	@r0,	r1	
+ 1cc:	00 01       	bra	@r1		
+ 1ce:	2f 62       	addc	#4,	r15	;r2 As==10
+ 1d0:	75 69       	addc.b	@r9+,	r5	
+ 1d2:	6c 64       	addc.b	@r4,	r12	
+ 1d4:	2f 62       	addc	#4,	r15	;r2 As==10
+ 1d6:	75 69       	addc.b	@r9+,	r5	
+ 1d8:	6c 64       	addc.b	@r4,	r12	
+ 1da:	64 2f       	jc	$-310    	;abs 0xa4
+ 1dc:	67 63       	addc.b	#2,	r7	;r3 As==10
+ 1de:	63 2d       	jc	$+712    	;abs 0x4a6
+ 1e0:	6d 73       	subc.b	#2,	r13	;r3 As==10
+ 1e2:	70 34       	jge	$+226    	;abs 0x2c4
+ 1e4:	33 30       	jn	$+104    	;abs 0x24c
+ 1e6:	2d 34       	jge	$+92     	;abs 0x242
+ 1e8:	2e 35       	jge	$+606    	;abs 0x446
+ 1ea:	2e 33       	jn	$-418    	;abs 0x48
+ 1ec:	7e 6d       	addc.b	@r13+,	r14	
+ 1ee:	73 70       	.word	0x7073;	????	Illegal as 2-op instr
+ 1f0:	67 63       	addc.b	#2,	r7	;r3 As==10
+ 1f2:	63 2d       	jc	$+712    	;abs 0x4ba
+ 1f4:	34 2e       	jc	$-918    	;abs 0xfe5e
+ 1f6:	35 2e       	jc	$-916    	;abs 0xfe62
+ 1f8:	32 2d       	jc	$+614    	;abs 0x45e
+ 1fa:	32 30       	jn	$+102    	;abs 0x260
+ 1fc:	31 31       	jn	$+612    	;abs 0x460
+ 1fe:	30 36       	jge	$-926    	;abs 0xfe60
+ 200:	31 32       	jn	$-924    	;abs 0xfe64
+ 202:	2f 2e       	jc	$-928    	;abs 0xfe62
+ 204:	2f 67       	addc	@r7,	r15	
+ 206:	63 63       	.word	0x6363;	????	Illegal as 2-op instr
+ 208:	2d 34       	jge	$+92     	;abs 0x264
+ 20a:	2e 35       	jge	$+606    	;abs 0x468
+ 20c:	2e 33       	jn	$-418    	;abs 0x6a
+ 20e:	2f 67       	addc	@r7,	r15	
+ 210:	63 63       	.word	0x6363;	????	Illegal as 2-op instr
+ 212:	2f 63       	addc	#2,	r15	;r3 As==10
+ 214:	6f 6e       	addc.b	@r14,	r15	
+ 216:	66 69       	addc.b	@r9,	r6	
+ 218:	67 2f       	jc	$-304    	;abs 0xe8
+ 21a:	6d 73       	subc.b	#2,	r13	;r3 As==10
+ 21c:	70 34       	jge	$+226    	;abs 0x2fe
+ 21e:	33 30       	jn	$+104    	;abs 0x286
+ 220:	00 00       	bra	@r0		
+ 222:	63 72       	.word	0x7263;	????	Illegal as 2-op instr
+ 224:	74 30       	jn	$+234    	;abs 0x30e
+ 226:	2e 53       	incd	r14		
+ 228:	00 01       	bra	@r1		
+ 22a:	00 00       	bra	@r0		
+ 22c:	00 00       	bra	@r0		
+ 22e:	03 02       	.word	0x0203;	????	Illegal as address instr
+ 230:	0e c2       	bic	r2,	r14	
+ 232:	03 9f       	.word	0x9f03;	????	Illegal as 2-op instr
+ 234:	01 01       	mova	@r1,	r1	
+ 236:	4b 4b       	mov.b	r11,	r11	
+ 238:	14 4b 2f 83 	mov	-31953(r11),r4	;0x832f(r11)
+ 23c:	02 00       	mova	@r0,	r2	
+ 23e:	00 01       	bra	@r1		
+ 240:	01 8a       	sub	r10,	r1	
+ 242:	00 00       	bra	@r0		
+ 244:	00 02       	bra	#4		;r2 As==10
+ 246:	00 70       	subc	r0,	r0	
+ 248:	00 00       	bra	@r0		
+ 24a:	00 01       	bra	@r1		
+ 24c:	01 fb       	and	r11,	r1	
+ 24e:	0e 0d       	mova	@r13,	r14	
+ 250:	00 01       	bra	@r1		
+ 252:	01 01       	mova	@r1,	r1	
+ 254:	01 00       	mova	@r0,	r1	
+ 256:	00 00       	bra	@r0		
+ 258:	01 00       	mova	@r0,	r1	
+ 25a:	00 01       	bra	@r1		
+ 25c:	2f 62       	addc	#4,	r15	;r2 As==10
+ 25e:	75 69       	addc.b	@r9+,	r5	
+ 260:	6c 64       	addc.b	@r4,	r12	
+ 262:	2f 62       	addc	#4,	r15	;r2 As==10
+ 264:	75 69       	addc.b	@r9+,	r5	
+ 266:	6c 64       	addc.b	@r4,	r12	
+ 268:	64 2f       	jc	$-310    	;abs 0x132
+ 26a:	67 63       	addc.b	#2,	r7	;r3 As==10
+ 26c:	63 2d       	jc	$+712    	;abs 0x534
+ 26e:	6d 73       	subc.b	#2,	r13	;r3 As==10
+ 270:	70 34       	jge	$+226    	;abs 0x352
+ 272:	33 30       	jn	$+104    	;abs 0x2da
+ 274:	2d 34       	jge	$+92     	;abs 0x2d0
+ 276:	2e 35       	jge	$+606    	;abs 0x4d4
+ 278:	2e 33       	jn	$-418    	;abs 0xd6
+ 27a:	7e 6d       	addc.b	@r13+,	r14	
+ 27c:	73 70       	.word	0x7073;	????	Illegal as 2-op instr
+ 27e:	67 63       	addc.b	#2,	r7	;r3 As==10
+ 280:	63 2d       	jc	$+712    	;abs 0x548
+ 282:	34 2e       	jc	$-918    	;abs 0xfeec
+ 284:	35 2e       	jc	$-916    	;abs 0xfef0
+ 286:	32 2d       	jc	$+614    	;abs 0x4ec
+ 288:	32 30       	jn	$+102    	;abs 0x2ee
+ 28a:	31 31       	jn	$+612    	;abs 0x4ee
+ 28c:	30 36       	jge	$-926    	;abs 0xfeee
+ 28e:	31 32       	jn	$-924    	;abs 0xfef2
+ 290:	2f 2e       	jc	$-928    	;abs 0xfef0
+ 292:	2f 67       	addc	@r7,	r15	
+ 294:	63 63       	.word	0x6363;	????	Illegal as 2-op instr
+ 296:	2d 34       	jge	$+92     	;abs 0x2f2
+ 298:	2e 35       	jge	$+606    	;abs 0x4f6
+ 29a:	2e 33       	jn	$-418    	;abs 0xf8
+ 29c:	2f 67       	addc	@r7,	r15	
+ 29e:	63 63       	.word	0x6363;	????	Illegal as 2-op instr
+ 2a0:	2f 63       	addc	#2,	r15	;r3 As==10
+ 2a2:	6f 6e       	addc.b	@r14,	r15	
+ 2a4:	66 69       	addc.b	@r9,	r6	
+ 2a6:	67 2f       	jc	$-304    	;abs 0x176
+ 2a8:	6d 73       	subc.b	#2,	r13	;r3 As==10
+ 2aa:	70 34       	jge	$+226    	;abs 0x38c
+ 2ac:	33 30       	jn	$+104    	;abs 0x314
+ 2ae:	00 00       	bra	@r0		
+ 2b0:	63 72       	.word	0x7263;	????	Illegal as 2-op instr
+ 2b2:	74 30       	jn	$+234    	;abs 0x39c
+ 2b4:	2e 53       	incd	r14		
+ 2b6:	00 01       	bra	@r1		
+ 2b8:	00 00       	bra	@r0		
+ 2ba:	00 00       	bra	@r0		
+ 2bc:	03 02       	.word	0x0203;	????	Illegal as address instr
+ 2be:	24 c2       	bic	#4,	r4	;r2 As==10
+ 2c0:	03 b9       	.word	0xb903;	????	Illegal as 2-op instr
+ 2c2:	01 01       	mova	@r1,	r1	
+ 2c4:	4b 4b       	mov.b	r11,	r11	
+ 2c6:	14 4b 2f 67 	mov	26415(r11),r4	;0x672f(r11)
+ 2ca:	02 00       	mova	@r0,	r2	
+ 2cc:	00 01       	bra	@r1		
+ 2ce:	01 85       	sub	r5,	r1	
+ 2d0:	00 00       	bra	@r0		
+ 2d2:	00 02       	bra	#4		;r2 As==10
+ 2d4:	00 70       	subc	r0,	r0	
+ 2d6:	00 00       	bra	@r0		
+ 2d8:	00 01       	bra	@r1		
+ 2da:	01 fb       	and	r11,	r1	
+ 2dc:	0e 0d       	mova	@r13,	r14	
+ 2de:	00 01       	bra	@r1		
+ 2e0:	01 01       	mova	@r1,	r1	
+ 2e2:	01 00       	mova	@r0,	r1	
+ 2e4:	00 00       	bra	@r0		
+ 2e6:	01 00       	mova	@r0,	r1	
+ 2e8:	00 01       	bra	@r1		
+ 2ea:	2f 62       	addc	#4,	r15	;r2 As==10
+ 2ec:	75 69       	addc.b	@r9+,	r5	
+ 2ee:	6c 64       	addc.b	@r4,	r12	
+ 2f0:	2f 62       	addc	#4,	r15	;r2 As==10
+ 2f2:	75 69       	addc.b	@r9+,	r5	
+ 2f4:	6c 64       	addc.b	@r4,	r12	
+ 2f6:	64 2f       	jc	$-310    	;abs 0x1c0
+ 2f8:	67 63       	addc.b	#2,	r7	;r3 As==10
+ 2fa:	63 2d       	jc	$+712    	;abs 0x5c2
+ 2fc:	6d 73       	subc.b	#2,	r13	;r3 As==10
+ 2fe:	70 34       	jge	$+226    	;abs 0x3e0
+ 300:	33 30       	jn	$+104    	;abs 0x368
+ 302:	2d 34       	jge	$+92     	;abs 0x35e
+ 304:	2e 35       	jge	$+606    	;abs 0x562
+ 306:	2e 33       	jn	$-418    	;abs 0x164
+ 308:	7e 6d       	addc.b	@r13+,	r14	
+ 30a:	73 70       	.word	0x7073;	????	Illegal as 2-op instr
+ 30c:	67 63       	addc.b	#2,	r7	;r3 As==10
+ 30e:	63 2d       	jc	$+712    	;abs 0x5d6
+ 310:	34 2e       	jc	$-918    	;abs 0xff7a
+ 312:	35 2e       	jc	$-916    	;abs 0xff7e
+ 314:	32 2d       	jc	$+614    	;abs 0x57a
+ 316:	32 30       	jn	$+102    	;abs 0x37c
+ 318:	31 31       	jn	$+612    	;abs 0x57c
+ 31a:	30 36       	jge	$-926    	;abs 0xff7c
+ 31c:	31 32       	jn	$-924    	;abs 0xff80
+ 31e:	2f 2e       	jc	$-928    	;abs 0xff7e
+ 320:	2f 67       	addc	@r7,	r15	
+ 322:	63 63       	.word	0x6363;	????	Illegal as 2-op instr
+ 324:	2d 34       	jge	$+92     	;abs 0x380
+ 326:	2e 35       	jge	$+606    	;abs 0x584
+ 328:	2e 33       	jn	$-418    	;abs 0x186
+ 32a:	2f 67       	addc	@r7,	r15	
+ 32c:	63 63       	.word	0x6363;	????	Illegal as 2-op instr
+ 32e:	2f 63       	addc	#2,	r15	;r3 As==10
+ 330:	6f 6e       	addc.b	@r14,	r15	
+ 332:	66 69       	addc.b	@r9,	r6	
+ 334:	67 2f       	jc	$-304    	;abs 0x204
+ 336:	6d 73       	subc.b	#2,	r13	;r3 As==10
+ 338:	70 34       	jge	$+226    	;abs 0x41a
+ 33a:	33 30       	jn	$+104    	;abs 0x3a2
+ 33c:	00 00       	bra	@r0		
+ 33e:	63 72       	.word	0x7263;	????	Illegal as 2-op instr
+ 340:	74 30       	jn	$+234    	;abs 0x42a
+ 342:	2e 53       	incd	r14		
+ 344:	00 01       	bra	@r1		
+ 346:	00 00       	bra	@r0		
+ 348:	00 00       	bra	@r0		
+ 34a:	03 02       	.word	0x0203;	????	Illegal as address instr
+ 34c:	98 c2 03 e1 	bic	&0xe103,257(r8)	;0x0101(r8)
+ 350:	01 01 
+ 352:	67 02 00 00 	mova	r2,	&0x70000
+ 356:	01 01       	mova	@r1,	r1	
+ 358:	84 00 00 00 	mova	#0x00000,r4	
+ 35c:	02 00       	mova	@r0,	r2	
+ 35e:	70 00 00 00 	mova	r0,	0x0000	;PC rel. 0x00360
+ 362:	01 01       	mova	@r1,	r1	
+ 364:	fb 0e       	suba	r14,	r11	
+ 366:	0d 00       	mova	@r0,	r13	
+ 368:	01 01       	mova	@r1,	r1	
+ 36a:	01 01       	mova	@r1,	r1	
+ 36c:	00 00       	bra	@r0		
+ 36e:	00 01       	bra	@r1		
+ 370:	00 00       	bra	@r0		
+ 372:	01 2f       	jc	$-508    	;abs 0x176
+ 374:	62 75       	subc.b	@r5,	r2	
+ 376:	69 6c       	addc.b	@r12,	r9	
+ 378:	64 2f       	jc	$-310    	;abs 0x242
+ 37a:	62 75       	subc.b	@r5,	r2	
+ 37c:	69 6c       	addc.b	@r12,	r9	
+ 37e:	64 64       	addc.b	@r4,	r4	
+ 380:	2f 67       	addc	@r7,	r15	
+ 382:	63 63       	.word	0x6363;	????	Illegal as 2-op instr
+ 384:	2d 6d       	addc	@r13,	r13	
+ 386:	73 70       	.word	0x7073;	????	Illegal as 2-op instr
+ 388:	34 33       	jn	$-406    	;abs 0x1f2
+ 38a:	30 2d       	jc	$+610    	;abs 0x5ec
+ 38c:	34 2e       	jc	$-918    	;abs 0xfff6
+ 38e:	35 2e       	jc	$-916    	;abs 0xfffa
+ 390:	33 7e       	.word	0x7e33;	????	Illegal as 2-op instr
+ 392:	6d 73       	subc.b	#2,	r13	;r3 As==10
+ 394:	70 67       	addc.b	@r7+,	r0	
+ 396:	63 63       	.word	0x6363;	????	Illegal as 2-op instr
+ 398:	2d 34       	jge	$+92     	;abs 0x3f4
+ 39a:	2e 35       	jge	$+606    	;abs 0x5f8
+ 39c:	2e 32       	jn	$-930    	;abs 0xfffa
+ 39e:	2d 32       	jn	$-932    	;abs 0xfffa
+ 3a0:	30 31       	jn	$+610    	;abs 0x602
+ 3a2:	31 30       	jn	$+100    	;abs 0x406
+ 3a4:	36 31       	jn	$+622    	;abs 0x612
+ 3a6:	32 2f       	jc	$-410    	;abs 0x20c
+ 3a8:	2e 2f       	jc	$-418    	;abs 0x206
+ 3aa:	67 63       	addc.b	#2,	r7	;r3 As==10
+ 3ac:	63 2d       	jc	$+712    	;abs 0x674
+ 3ae:	34 2e       	jc	$-918    	;abs 0x18
+ 3b0:	35 2e       	jc	$-916    	;abs 0x1c
+ 3b2:	33 2f       	jc	$-408    	;abs 0x21a
+ 3b4:	67 63       	addc.b	#2,	r7	;r3 As==10
+ 3b6:	63 2f       	jc	$-312    	;abs 0x27e
+ 3b8:	63 6f       	.word	0x6f63;	????	Illegal as 2-op instr
+ 3ba:	6e 66       	addc.b	@r6,	r14	
+ 3bc:	69 67       	addc.b	@r7,	r9	
+ 3be:	2f 6d       	addc	@r13,	r15	
+ 3c0:	73 70       	.word	0x7073;	????	Illegal as 2-op instr
+ 3c2:	34 33       	jn	$-406    	;abs 0x22c
+ 3c4:	30 00 00 63 	bra	0x6300		;PC rel. 0x066c6
+ 3c8:	72 74       	subc.b	@r4+,	r2	
+ 3ca:	30 2e       	jc	$-926    	;abs 0x2c
+ 3cc:	53 00       	rrcm	#1,	#0	;r3 As==00
+ 3ce:	01 00       	mova	@r0,	r1	
+ 3d0:	00 00       	bra	@r0		
+ 3d2:	00 03       	bra	#2		;r3 As==10
+ 3d4:	02 cc       	bic	r12,	r2	
+ 3d6:	c2 03       	mova	#0,	r2	;r3 As==00
+ 3d8:	b0 02 01 02 	suba	#0x20201,r0	
+ 3dc:	02 00       	mova	@r0,	r2	
+ 3de:	01 01       	mova	@r1,	r1	
+
+Disassembly of section .debug_frame:
+
+00000000 <.debug_frame>:
+   0:	0e 00       	mova	@r0,	r14	
+   2:	00 00       	bra	@r0		
+   4:	ff ff ff ff 	and.b	@r15+,	-1(r15)	;0xffff(r15)
+   8:	01 00       	mova	@r0,	r1	
+   a:	01 7e       	subc	r14,	r1	
+   c:	00 0c       	bra	@r12		
+   e:	01 02       	mova	#4,	r1	;r2 As==10
+  10:	80 01 08 00 	bra	#0x10008	
+  14:	00 00       	bra	@r0		
+  16:	00 00       	bra	@r0		
+  18:	00 00       	bra	@r0		
+  1a:	38 c2       	bic	#8,	r8	;r2 As==11
+  1c:	60 00 12 00 	mova	r0,	&0x00012
+  20:	00 00       	bra	@r0		
+  22:	00 00       	bra	@r0		
+  24:	00 00       	bra	@r0		
+  26:	a2 c2 2a 00 	bic	#4,	&0x002a	;r2 As==10
+  2a:	42 0e       	rlam.a	#4,	r2	
+  2c:	04 42       	mov	r2,	r4	
+  2e:	0e 06       	mova	@r6,	r14	
+  30:	8e 03 8f 02 	mova	#0x3028f,r14	
+
+Disassembly of section .debug_str:
+
+00000000 <.debug_str>:
+   0:	47 4e       	mov.b	r14,	r7	
+   2:	55 20       	jnz	$+172    	;abs 0xae
+   4:	43 20       	jnz	$+136    	;abs 0x8c
+   6:	34 2e       	jc	$-918    	;abs 0xfc70
+   8:	35 2e       	jc	$-916    	;abs 0xfc74
+   a:	33 00       	.word	0x0033;	????	Illegal as address instr
+   c:	2a 5f       	add	@r15,	r10	
+   e:	5f 50 4a 4f 	add.b	0x4f4a,	r15	;PC rel. 0x04f5c
+  12:	55 54 00 2f 	add.b	12032(r4),r5	;0x2f00(r4)
+  16:	68 6f       	addc.b	@r15,	r8	
+  18:	6d 65       	addc.b	@r5,	r13	
+  1a:	2f 77       	subc	@r7,	r15	
+  1c:	61 73       	subc.b	#2,	r1	;r3 As==10
+  1e:	61 62       	addc.b	#4,	r1	;r2 As==10
+  20:	69 2f       	jc	$-300    	;abs 0xfef4
+  22:	64 65       	addc.b	@r5,	r4	
+  24:	76 2f       	jc	$-274    	;abs 0xff12
+  26:	6d 73       	subc.b	#2,	r13	;r3 As==10
+  28:	70 34       	jge	$+226    	;abs 0x10a
+  2a:	33 30       	jn	$+104    	;abs 0x92
+  2c:	2f 69       	addc	@r9,	r15	
+  2e:	32 63       	addc	#-1,	r2	;r3 As==11
+  30:	5f 73       	subc.b	#1,	r15	;r3 As==01
+  32:	6c 61       	addc.b	@r1,	r12	
+  34:	76 65       	addc.b	@r5+,	r6	
+  36:	00 75       	subc	r5,	r0	
+  38:	6e 73       	subc.b	#2,	r14	;r3 As==10
+  3a:	69 67       	addc.b	@r7,	r9	
+  3c:	6e 65       	addc.b	@r5,	r14	
+  3e:	64 20       	jnz	$+202    	;abs 0x108
+  40:	63 68       	.word	0x6863;	????	Illegal as 2-op instr
+  42:	61 72       	subc.b	#4,	r1	;r2 As==10
+  44:	00 6d       	addc	r13,	r0	
+  46:	61 69       	addc.b	@r9,	r1	
+  48:	6e 00 52 58 	mova	r0,	&0xe5852
+  4c:	44 61       	addc.b	r1,	r4	
+  4e:	74 61       	addc.b	@r1+,	r4	
+  50:	00 2a       	jnc	$-1022   	;abs 0xfc52
+  52:	5f 5f 50 41 	add.b	16720(r15),r15	;0x4150(r15)
+  56:	53 45       	.word	0x4553;	????	Illegal as 2-op instr
+  58:	4c 31       	jn	$+666    	;abs 0x2f2
+  5a:	5f 4c 00 2a 	mov.b	10752(r12),r15	;0x2a00(r12)
+  5e:	5f 5f 55 43 	add.b	17237(r15),r15	;0x4355(r15)
+  62:	42 30       	jn	$+134    	;abs 0xe8
+  64:	49 45       	mov.b	r5,	r9	
+  66:	00 6c       	addc	r12,	r0	
+  68:	6f 6e       	addc.b	@r14,	r15	
+  6a:	67 20       	jnz	$+208    	;abs 0x13a
+  6c:	6c 6f       	addc.b	@r15,	r12	
+  6e:	6e 67       	addc.b	@r7,	r14	
+  70:	20 75       	subc	@r5,	r0	
+  72:	6e 73       	subc.b	#2,	r14	;r3 As==10
+  74:	69 67       	addc.b	@r7,	r9	
+  76:	6e 65       	addc.b	@r5,	r14	
+  78:	64 20       	jnz	$+202    	;abs 0x142
+  7a:	69 6e       	addc.b	@r14,	r9	
+  7c:	74 00 69 32 	mova	r0,	12905(r4);0x3269(r4)
+  80:	63 5f       	.word	0x5f63;	????	Illegal as 2-op instr
+  82:	69 73       	subc.b	#2,	r9	;r3 As==10
+  84:	72 00 2a 5f 	mova	r0,	&0x5f2a	
+  88:	5f 57 44 54 	add.b	21572(r7),r15	;0x5444(r7)
+  8c:	43 54       	.word	0x5443;	????	Illegal as 2-op instr
+  8e:	4c 00       	rrcm.a	#1,	r12	
+  90:	2a 5f       	add	@r15,	r10	
+  92:	5f 55 43 42 	add.b	16963(r5),r15	;0x4243(r5)
+  96:	30 49       	br	@r9+		
+  98:	56 00       	rrcm	#1,	r6	
+  9a:	2a 5f       	add	@r15,	r10	
+  9c:	5f 55 43 42 	add.b	16963(r5),r15	;0x4243(r5)
+  a0:	30 52       	add	#8,	r0	;r2 As==11
+  a2:	58 42 55 46 	mov.b	&0x4655,r8	
+  a6:	00 6c       	addc	r12,	r0	
+  a8:	6f 6e       	addc.b	@r14,	r15	
+  aa:	67 20       	jnz	$+208    	;abs 0x17a
+  ac:	6c 6f       	addc.b	@r15,	r12	
+  ae:	6e 67       	addc.b	@r7,	r14	
+  b0:	20 69       	addc	@r9,	r0	
+  b2:	6e 74       	subc.b	@r4,	r14	
+  b4:	00 2a       	jnc	$-1022   	;abs 0xfcb6
+  b6:	5f 5f 43 53 	add.b	21315(r15),r15	;0x5343(r15)
+  ba:	43 54       	.word	0x5443;	????	Illegal as 2-op instr
+  bc:	4c 30       	jn	$+154    	;abs 0x156
+  be:	5f 48 00 6d 	mov.b	27904(r8),r15	;0x6d00(r8)
+  c2:	61 69       	addc.b	@r9,	r1	
+  c4:	6e 2e       	jc	$-802    	;abs 0xfda2
+  c6:	63 00 2a 5f 	mova	r0,	&0x35f2a
+  ca:	5f 43       	mov.b	#1,	r15	;r3 As==01
+  cc:	53 43       	.word	0x4353;	????	Illegal as 2-op instr
+  ce:	54 4c 31 00 	mov.b	49(r12),r4	;0x0031(r12)
+  d2:	2a 5f       	add	@r15,	r10	
+  d4:	5f 43       	mov.b	#1,	r15	;r3 As==01
+  d6:	53 43       	.word	0x4353;	????	Illegal as 2-op instr
+  d8:	54 4c 32 00 	mov.b	50(r12),r4	;0x0032(r12)
+  dc:	2a 5f       	add	@r15,	r10	
+  de:	5f 43       	mov.b	#1,	r15	;r3 As==01
+  e0:	53 43       	.word	0x4353;	????	Illegal as 2-op instr
+  e2:	54 4c 33 00 	mov.b	51(r12),r4	;0x0033(r12)
+  e6:	2a 5f       	add	@r15,	r10	
+  e8:	5f 55 43 42 	add.b	16963(r5),r15	;0x4243(r5)
+  ec:	30 49       	br	@r9+		
+  ee:	32 43       	mov	#-1,	r2	;r3 As==11
+  f0:	4f 41       	mov.b	r1,	r15	
+  f2:	30 00 2a 5f 	bra	0x5f2a		;PC rel. 0x0601e
+  f6:	5f 55 43 42 	add.b	16963(r5),r15	;0x4243(r5)
+  fa:	30 43       	br	#-1		;r3 As==11
+  fc:	54 4c 57 30 	mov.b	12375(r12),r4	;0x3057(r12)
+ 100:	00 2a       	jnc	$-1022   	;abs 0xfd02
+ 102:	5f 5f 50 4a 	add.b	19024(r15),r15	;0x4a50(r15)
+ 106:	44 49       	mov.b	r9,	r4	
+ 108:	52 00       	rrcm	#1,	r2	
+
+Disassembly of section .debug_loc:
+
+00000000 <.debug_loc>:
+   0:	a2 c2 a4 c2 	bic	#4,	&0xc2a4	;r2 As==10
+   4:	02 00       	mova	@r0,	r2	
+   6:	71 02 a4 c2 	mova	r2,	-15708(r1);0xc2a4(r1)
+   a:	a6 c2 02 00 	bic	#4,	2(r6)	;r2 As==10, 0x0002(r6)
+   e:	71 04 a6 c2 	mova	r4,	-15706(r1);0xc2a6(r1)
+  12:	cc c2 02 00 	bic.b	r2,	2(r12)	;0x0002(r12)
+  16:	71 06 00 00 	mova	r6,	0(r1)	;0x0000(r1)
+	...
+
+Disassembly of section .debug_pubtypes:
+
+00000000 <.debug_pubtypes>:
+   0:	0e 00       	mova	@r0,	r14	
+   2:	00 00       	bra	@r0		
+   4:	02 00       	mova	@r0,	r2	
+   6:	00 00       	bra	@r0		
+   8:	00 00       	bra	@r0		
+   a:	83 02       	.word	0x0283;	????	Illegal as address instr
+   c:	00 00       	bra	@r0		
+   e:	00 00       	bra	@r0		
+	...
+
+Disassembly of section .debug_ranges:
+
+00000000 <.debug_ranges>:
+   0:	a2 c2 cc c2 	bic	#4,	&0xc2cc	;r2 As==10
+   4:	38 c2       	bic	#8,	r8	;r2 As==11
+   6:	98 c2 00 00 	bic	&0x0000,0(r8)	;0x0000(r8)
+   a:	00 00 
